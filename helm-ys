@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# This is program provides a way to use YAMLScript for Helm templating.
+# See https://github.com/yaml/helm-ys for full details.
+
+set -euo pipefail
+
+main() (
+  # Read rendered YAML from Helm:
+  yaml=$(cat)
+
+  # Get the instance name from the YAML:
+  # XXX Can we get this a better way?
+  HELM_RELEASE=$(
+  ys - -e 'stream().filter(\(_.HELM-YS)):first
+             .dissoc("HELM-YS"):json/dump:say' <<<"$yaml"
+  )
+
+  # Make sure we got it:
+  [[ $HELM_RELEASE ]] ||
+    die "helm-ys Error: 'app.kubernetes.io/instance:' not found in YAML"
+
+  # Enable YAMLScript code in the YAML and import the 'helpers.ys' library,
+  # and the pipe to ys again to evaulate any YAMLScript code used:
+  yaml=$(
+    export HELM_RELEASE
+    export YSPATH='.'
+
+    ys -e '
+    slurp(IN)
+      .replace(qr("(?m)^!yamlscript/v0/.*\n"))
+      .replace(/(?m)^:use helpers:.*\n/)
+      .replace(/(?m)^---$/ "--- !yamlscript/v0/")
+      .replace(/^(.*)\n/ "$1\n:use \"helpers\":\n")
+      .replace(/(?s)(.*\n)---.*/ "$1")
+      .print()
+    ' <<<"$yaml" |
+    ys -Ys -
+  )
+
+  # Make sure we have output, because helm's --post-renderer won't complain if
+  # it gets no content back:
+  [[ $yaml ]] ||
+    die "helm-ys failed"
+
+  # Print the evaluated content back to helm; tee into a file if requested:
+  echo "$yaml" | (
+    if [[ ${HELM_YS_OUTPUT-} ]]; then
+      tee "$HELM_YS_OUTPUT"
+    else
+      cat
+    fi
+  )
+)
+
+die() { echo "$*" >&2; exit 1; }
+
+main "$@"
