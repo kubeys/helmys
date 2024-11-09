@@ -16,12 +16,12 @@ rm -fr "$CHART" "$HELM_YS_OUTPUT"
 (
   set -x
 
-  export PATH=$PWD:$PATH
+  export PATH=$PWD/bin:$PATH
 
   helm create "$CHART"
 
-  cp helm-ys.yaml "$CHART"/templates/
-  cp helpers.ys "$CHART"
+  cp templates/helm-ys.yaml "$CHART"/templates/helm-ys.yaml
+  cp templates/helpers.ys   "$CHART"/templates/helpers.ys
 
   export HELM_YS_OUTPUT=$HELM_YS_OUTPUT
 

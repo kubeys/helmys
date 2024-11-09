@@ -41,29 +41,29 @@ $ curl -s https://yamlscript.org/install | bash
 ```
 
 
-### The `helpers.ys` file in your chart's main directory
+### The `helpers.ys` file in your chart's `templates/ directory
 
 This is a YAMLScript port of the default `_helpers.tpl` Go template file.
 It is used to define resuable variables and functions for use by the YAMLScript
 in your templates.
 
 ```
-$ cp <here>/helpers.ys <chart>/helpers.ys
+$ cp template/helpers.ys <chart>/template/helpers.ys
 ```
 
 
-### The `helm-ys.yaml` file in your chart's `template/` directory.
+### The `helm-ys.yaml` file in your chart's `templates/` directory.
 
 This template gets data for the `Release` template variable.
 
 ```
-$ cp <here>/helm-ys.yaml <chart>/templates/helm-ys.yaml
+$ cp template/helm-ys.yaml <chart>/templates/helm-ys.yaml
 ```
 
 
 ### The `helm-ys` Bash script file in your `PATH`
 
-Just copy `<here>/helm-ys` into a directory that's in your `PATH` so `helm` can
+Just copy `bin/helm-ys` into a directory that's in your `PATH` so `helm` can
 find it.
 
 

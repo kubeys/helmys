@@ -24,15 +24,18 @@ main() (
   # and the pipe to ys again to evaulate any YAMLScript code used:
   yaml=$(
     export HELM_RELEASE
-    export YSPATH='.'
+    export YSPATH='./templates/'
 
     ys -e '
     slurp(IN)
+      .split("\n---\n")
+      .remove(\(_ =~ /(?m)^HELM-YS:/))
+      .remove(\(_ =~ /(?m)^Chart =:/))
+      .join("\n---\n")
       .replace(qr("(?m)^!yamlscript/v0/.*\n"))
       .replace(/(?m)^:use helpers:.*\n/)
       .replace(/(?m)^---$/ "--- !yamlscript/v0/")
       .replace(/^(.*)\n/ "$1\n:use \"helpers\":\n")
-      .replace(/(?s)(.*\n)---.*/ "$1")
       .print()
     ' <<<"$yaml" |
     ys -Ys -
