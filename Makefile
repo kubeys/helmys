@@ -1,6 +1,6 @@
 SHELL := bash
 CHART := a-chart
-OUT := helm-ys-install-output.yaml
+OUT := helmys-install-output.yaml
 
 default:
 

@@ -4,7 +4,7 @@ set -euo pipefail
 
 CHART=a-chart
 NAME=name-$(date +%s)
-HELM_YS_OUTPUT=$PWD/helm-ys-install-output.yaml
+HELM_YS_OUTPUT=$PWD/helmys-install-output.yaml
 
 command -v ys >/dev/null || {
   echo "ys not installed"
@@ -20,15 +20,15 @@ rm -fr "$CHART" "$HELM_YS_OUTPUT"
 
   helm create "$CHART"
 
-  cp templates/helm-ys.yaml "$CHART"/templates/helm-ys.yaml
+  cp templates/helmys.yaml "$CHART"/templates/helmys.yaml
   cp templates/helpers.ys   "$CHART"/templates/helpers.ys
 
   export HELM_YS_OUTPUT=$HELM_YS_OUTPUT
 
-  # helm install "$NAME" "$CHART" --post-renderer helm-ys
+  # helm install "$NAME" "$CHART" --post-renderer helmys
   (
     cd "$CHART"
-    helm install "$NAME" . --post-renderer helm-ys
+    helm install "$NAME" . --post-renderer helmys
   )
 )
 

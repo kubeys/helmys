@@ -4,8 +4,8 @@
 Chart =: yaml/load-file('Chart.yaml')
 Values =: yaml/load-file('values.yaml')
 
-# The 'Release' data is built into Helm but the 'helm-ys' renders the special
-# 'helm-ys.yaml' template and puts the JSON data in the 'HELM_RELEASE' variable.
+# The 'Release' data is built into Helm but the 'helmys' renders the special
+# 'helmys.yaml' template and puts the JSON data in the 'HELM_RELEASE' variable.
 Release =:
   if ENV.HELM_RELEASE:
     json/load: ENV.HELM_RELEASE

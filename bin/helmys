@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This is program provides a way to use YAMLScript for Helm templating.
-# See https://github.com/yaml/helm-ys for full details.
+# See https://github.com/yaml/helmys for full details.
 
 set -euo pipefail
 
@@ -12,13 +12,13 @@ main() (
   # Get the instance name from the YAML:
   # XXX Can we get this a better way?
   HELM_RELEASE=$(
-  ys - -e 'stream().filter(\(_.HELM-YS)):first
-             .dissoc("HELM-YS"):json/dump:say' <<<"$yaml"
+  ys - -e 'stream().filter(\(_.HELMYS)):first
+             .dissoc("HELMYS"):json/dump:say' <<<"$yaml"
   )
 
   # Make sure we got it:
   [[ $HELM_RELEASE ]] ||
-    die "helm-ys Error: 'app.kubernetes.io/instance:' not found in YAML"
+    die "helmys Error: 'app.kubernetes.io/instance:' not found in YAML"
 
   # Enable YAMLScript code in the YAML and import the 'helpers.ys' library,
   # and the pipe to ys again to evaulate any YAMLScript code used:
@@ -29,7 +29,7 @@ main() (
     ys -e '
     slurp(IN)
       .split("\n---\n")
-      .remove(\(_ =~ /(?m)^HELM-YS:/))
+      .remove(\(_ =~ /(?m)^HELMYS:/))
       .remove(\(_ =~ /(?m)^Chart =:/))
       .join("\n---\n")
       .replace(qr("(?m)^!yamlscript/v0/.*\n"))
@@ -44,7 +44,7 @@ main() (
   # Make sure we have output, because helm's --post-renderer won't complain if
   # it gets no content back:
   [[ $yaml ]] ||
-    die "helm-ys failed"
+    die "helmys failed"
 
   # Print the evaluated content back to helm; tee into a file if requested:
   echo "$yaml" | (
