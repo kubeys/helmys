@@ -22,7 +22,7 @@ Using YAMLScript for your templating needs is much cleaner than the standard Go
 templating.
 See this gist for a comparison of a full conversion:
 
-https://gist.github.com/ingydotnet/2864511d24d90c0cc910bfa613c99d07
+https://gist.github.com/ingydotnet/c0afc0071133c696c5b4f17b5ee86b98
 
 
 ## Setting It Up
