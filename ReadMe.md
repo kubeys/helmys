@@ -102,12 +102,6 @@ Expects bugs, fixes and changes.
 Please let us know what's wrong with it, and how it can be made better.
 
 
-## Known Issues
-
-At the moment you need to run `helm install` in your chart's root directory.
-This will be fixed very soon.
-
-
 ## License & Copyright
 
 Copyright 2024 Ingy döt Net <ingy@ingy.net>

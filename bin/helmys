@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# shellcheck disable=2016
+
 # This is program provides a way to use YAMLScript for Helm templating.
 # See https://github.com/yaml/helmys for full details.
 
@@ -9,11 +11,34 @@ main() (
   # Read rendered YAML from Helm:
   yaml=$(cat)
 
+  if [[ -z ${HELMYS_CHART-} ]]; then
+    # Find chart path from yaml text:
+    chart_path=$(
+      <<<"$yaml" ys -e '
+text =: IN:slurp
+m =: text =~ qr("(?m)^# Source:\ (.*)/templates/helmys.yaml$")
+when-not m:
+  die: "templates/helmys.yaml not seen by helmys"
+path =: m.1 ||| "."
+say: path
+'
+    )
+    [[ -e $chart_path/templates/helmys.yaml ]] ||
+      die "Can't determine chart path." \
+          "Please set HELMYS_CHART=<path/to/chart>"
+    export HELMYS_CHART=$chart_path
+  fi
+
+  cd "$HELMYS_CHART" ||
+    die "Can't cd to '$HELMYS_CHART'"
+
   # Get the instance name from the YAML:
   # XXX Can we get this a better way?
   HELM_RELEASE=$(
-  ys - -e 'stream().filter(\(_.HELMYS)):first
-             .dissoc("HELMYS"):json/dump:say' <<<"$yaml"
+    <<<"$yaml" \
+    ys -x - -e \
+      'stream().filter(\(_.HELMYS)):first
+               .dissoc("HELMYS"):json/dump:say'
   )
 
   # Make sure we got it:
@@ -48,14 +73,14 @@ main() (
 
   # Print the evaluated content back to helm; tee into a file if requested:
   echo "$yaml" | (
-    if [[ ${HELM_YS_OUTPUT-} ]]; then
-      tee "$HELM_YS_OUTPUT"
+    if [[ ${HELMYS_OUTPUT-} ]]; then
+      tee "$HELMYS_OUTPUT"
     else
       cat
     fi
   )
 )
 
-die() { echo "$*" >&2; exit 1; }
+die() { printf '%s\n' "$@" >&2; exit 1; }
 
 main "$@"
