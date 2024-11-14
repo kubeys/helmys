@@ -25,7 +25,7 @@ rm -fr "$CHART" "$HELMYS_OUTPUT"
   cp templates/helmys.yaml "$CHART"/templates/helmys.yaml
   cp templates/helpers.ys  "$CHART"/templates/helpers.ys
 
-  helm install "$NAME" "$CHART" --post-renderer helmys
+  helm install "$NAME" "$CHART" --post-renderer=helmys
 )
 
 echo $'\n\n\e[32m*** IT WORKED!!! ***\e[0m\n\n'
