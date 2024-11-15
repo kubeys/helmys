@@ -66,6 +66,13 @@ say: path
       .replace(/^(.*)\n/ "$1\n:use \"helpers\":\n")
       .print()
     ' <<<"$yaml" |
+    (
+      if [[ ${HELMYS_THRUPUT-} ]]; then
+        tee "$HELMYS_THRUPUT"
+      else
+        cat
+      fi
+    ) |
     ys -Ys -
   )
 
