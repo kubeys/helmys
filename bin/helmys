@@ -39,7 +39,7 @@ say: path
   # XXX Can we get this a better way?
   HELM_RELEASE=$(
     <<<"$yaml" \
-    ys -x - -e \
+    ys - -e \
       'stream().filter(\(_.HELMYS)):first
                .dissoc("HELMYS"):json/dump:say'
   )
@@ -60,9 +60,9 @@ say: path
       .remove(\(_ =~ /(?m)^HELMYS:/))
       .remove(\(_ =~ /(?m)^Chart =:/))
       .join("\n---\n")
-      .replace(qr("(?m)^!yamlscript/v0/.*\n"))
+      .replace(qr("(?m)^!yamlscript/v0:.*\n"))
       .replace(/(?m)^:use helpers:.*\n/)
-      .replace(/(?m)^---$/ "--- !yamlscript/v0/")
+      .replace(/(?m)^---$/ "--- !yamlscript/v0:")
       .replace(/^(.*)\n/ "$1\n:use \"helpers\":\n")
       .print()
     ' <<<"$yaml" |
