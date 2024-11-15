@@ -4,6 +4,7 @@ set -euo pipefail
 
 CHART=a-chart
 NAME=name-$(date +%s)
+HELMYS_INPUT=$PWD/helmys-install-input.yaml
 HELMYS_OUTPUT=$PWD/helmys-install-output.yaml
 
 command -v ys >/dev/null || {
@@ -11,14 +12,16 @@ command -v ys >/dev/null || {
   exit 1
 }
 
+rm -fr "$CHART" "$HELMYS_INPUT"
 rm -fr "$CHART" "$HELMYS_OUTPUT"
 
 (
   set -x
 
   PATH=$PWD/bin:$PATH
+  HELMYS_INPUT=$HELMYS_INPUT
   HELMYS_OUTPUT=$HELMYS_OUTPUT
-  export PATH HELMYS_OUTPUT
+  export PATH HELMYS_INPUT HELMYS_OUTPUT
 
   helm create "$CHART"
 

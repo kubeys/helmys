@@ -10,6 +10,9 @@ set -euo pipefail
 main() (
   # Read rendered YAML from Helm:
   yaml=$(cat)
+  if [[ ${HELMYS_INPUT-} ]]; then
+    echo "$yaml" > "$HELMYS_INPUT"
+  fi
 
   if [[ -z ${HELMYS_CHART-} ]]; then
     # Find chart path from yaml text:

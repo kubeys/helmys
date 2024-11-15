@@ -1,6 +1,7 @@
 SHELL := bash
 
 CHART := a-chart
+IN := helmys-install-input.yaml
 OUT := helmys-install-output.yaml
 
 
@@ -19,4 +20,4 @@ endif
 
 clean:
 	$(RM) -r $(CHART)
-	$(RM) $(OUT)
+	$(RM) $(IN) $(OUT)
