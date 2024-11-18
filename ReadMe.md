@@ -1,4 +1,4 @@
-helmys
+HelmYS
 ======
 
 Helm + YS - Support YAMLScript in Helm Templates
@@ -18,8 +18,9 @@ $ helm install <name> <chart> --post-renderer=helmys
 
 The `helmys` (pronounced "helm wise") command provides a way to use YAMLScript
 for Helm templating.
-You can use as much or as little YAMLScript in your Helm templates, replacing
-all the Go templating syntax or none of it.
+You can use as much or as little [YAMLScript](https://yamlscript.org) in your
+Helm templates as you wish, replacing all the Go templating syntax or none of
+it.
 
 Using YAMLScript for your templating needs is much cleaner than the standard Go
 templating.
@@ -27,13 +28,17 @@ See this gist for a comparison of a full conversion:
 
 https://gist.github.com/ingydotnet/c0afc0071133c696c5b4f17b5ee86b98
 
+In addition templates that use YAMLScript exclusively for YAML are valid YAML
+files, thus various YAML tools like `yamllint` can be used on them.
+
 
 ## Setting It Up
 
-Setting up helmys is very simple.
-Just install helmys and ys, then initialize your chart.
+Setting up HelmYS is very simple.
+Just install `helmys` and `ys` (the YAMLScript CLI binary), then initialize
+your chart.
 
-### Installing helmys and ys
+### Installing `helmys` and `ys`
 
 In this directory, run:
 ```
@@ -44,17 +49,20 @@ This will install `helmys` in `$PREFIX/bin/`.
 It will also install the YAMLScript binary `ys` in `$PREFIX/bin` if it is not
 already there.
 
-Note: `ys` must be version `0.1.84` or higher.
+> **Note**: You can use any directory absolute path for `PREFIX` as long as it
+> contains a `bin/` directory that is in your PATH.
+> Also `ys` must be version `0.1.84` or higher.
 
 
 ## Initializing your chart
 
 Run:
 ```
-helmys init <chart-dir>
+helmys init <chart>
 ```
 
-This will install 2 files in your chart's template directory:
+This will install 2 files in your chart's template directory that are required
+by `helmys`.
 
 * `helmys.yaml`
   This template gets data for the `Release` template variable.
@@ -69,14 +77,46 @@ This will install 2 files in your chart's template directory:
 
 ## Using `helmys` with `helm install`
 
-Add the `--post-renderer=helmys` option to your `helm install` commands.
+Just add the `--post-renderer=helmys` option to your `helm install` commands.
+```
+$ helm install <name> <chart> --post-renderer=helmys
+```
+
+At the moment things work best when you run `helm install` from the chart's
+directory.
+See `HELMYS_CHART` below for other options if that is not possible.
+Some forms of `helm install` might not be possible, but that should be fixed
+soon.
+
+
+## Environment Variables
+
+HelmYS has some environment variables that you might want to use.
+
+These 3 are for logging the YAML states during `helmys` post rendering.
+
+* `HELMYS_INPUT=<file-name>`
+  Name of a file to write the text that `helmys` read (from `helm`) on stdin.
+* `HELMYS_THRUPUT=<file-name>`
+  Name of a file to write the text after `helmys` altered it to add a few
+  required by YAMLScript.
+* `HELMYS_THRUPUT=<file-name>`
+  Name of a file to write the text after `helmys` altered it to add a few
+  required by YAMLScript.
+
+The `helmys` command needs to know the directory on disk of where the chart
+being installed lives, and `helm` doesn't provide that at the moment.
+Hopefully this will be fixed soon.
+
+If `helmys` can't infer it it will error and ask you to set
+`HELMYS_CHART=<chart-path>`.
 
 
 ## Try It Out
 
 You can run `make test` which just runs the `test.sh` Bash script.
 It creates a new Helm chart, adds the `helmys` stuff and runs `helm install`
-on it.
+on it, printing all the commands as it goes.
 
 
 ## Status
