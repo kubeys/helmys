@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # shellcheck disable=2016
 
@@ -6,8 +6,46 @@
 # See https://github.com/yaml/helmys for full details.
 
 set -euo pipefail
+shopt -s inherit_errexit 2>/dev/null || true
 
 main() (
+  if [[ $# -eq 0 ]]; then
+    post-render
+  else
+    cmd=${1-}; shift
+    case "$cmd" in
+      init) do-init "$@";;
+      # install) do-install "$@";;
+      # template) do-template "$@";;
+      *) die "Invalid command: 'helmys $*'";;
+    esac
+  fi
+)
+
+do-init() (
+  [[ $# -eq 1 ]] ||
+    die "Invalid usage" \
+        "Expected 'helmys init <chart-dir>'"
+
+  chart=$1
+  [[ -d $chart && -d $chart/templates ]] ||
+    die "'$chart' is not a chart directory"
+  [[ -f $chart/bin/helmys ]] &&
+    die "'$chart' is not a chart directory"
+
+  templates=$chart/templates
+  [[ ! -f $templates/helmys.yaml &&
+     ! -f $templates/helpers.ys
+  ]] || die "'$chart' already initialized"
+
+  (
+    cd "$templates" || exit
+    curl -sO 'https://raw.githubusercontent.com/kubeys/helmys/refs/heads/main/templates/helmys.yaml'
+    curl -sO 'https://raw.githubusercontent.com/kubeys/helmys/refs/heads/main/templates/helpers.ys'
+  )
+)
+
+post-render() (
   # Read rendered YAML from Helm:
   yaml=$(cat)
   if [[ ${HELMYS_INPUT-} ]]; then

@@ -28,8 +28,7 @@ rm -fr "$CHART" "$HELMYS_OUTPUT"
 
   helm create "$CHART"
 
-  cp templates/helmys.yaml "$CHART"/templates/helmys.yaml
-  cp templates/helpers.ys  "$CHART"/templates/helpers.ys
+  helmys init "$CHART"
 
   helm install "$NAME" "$CHART" --post-renderer=helmys
 )
