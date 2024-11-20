@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name:: chart-fullname
-  labels:: common-labels()
+  labels:: chart-labels
 spec:
   type:: Values.service.type
   ports:
@@ -10,4 +10,4 @@ spec:
     targetPort: http
     protocol: TCP
     name: http
-  selector:: selectorLabels()
+  selector:: selectorLabels

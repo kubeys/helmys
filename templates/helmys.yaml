@@ -32,22 +32,18 @@ chart-fullname =:
         trunc: Release.Name
         format "%s-%s": Release.Name name
 
-# Create chart name and version as used by the chart label:
-defn chart-chart():
-  trunc+: format("%s-%s" Chart.Name Chart.Version)
-
-# Common labels:
-defn common-labels():
-  apply merge::
-  - helm.sh/chart:: "$(Chart.name)-$(Chart.version)"
-  - ! selectorLabels()
-  - app.kubernetes.io/version:: Chart.appVersion
-    app.kubernetes.io/managed-by:: Release.Service
-
 # Selector labels:
-defn selectorLabels()::
+selectorLabels =::
   app.kubernetes.io/name:: Chart.name
   app.kubernetes.io/instance:: Release.Name
+
+# Chart labels:
+chart-labels =:
+  apply merge::
+  - helm.sh/chart:: "$(Chart.name)-$(Chart.version)"
+  - ! selectorLabels
+  - app.kubernetes.io/version:: Chart.appVersion
+    app.kubernetes.io/managed-by:: Release.Service
 
 # Create the name of the service account to use:
 serviceAccountName =:

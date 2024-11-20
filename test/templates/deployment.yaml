@@ -2,17 +2,17 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name:: chart-fullname
-  labels:: common-labels()
+  labels:: chart-labels
 spec:
   :when-not Values.autoscaling.enabled.?::
    replicas:: Values.replicaCount
   selector:
-    matchLabels:: selectorLabels()
+    matchLabels:: selectorLabels
   template:
     metadata:
       :when+ Values.podAnnotations.?::
        annotations:: _
-      labels:: common-labels()
+      labels:: chart-labels
     spec:
       :when+ Values.imagePullSecrets.?::
        imagePullSecrets:: _
