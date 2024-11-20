@@ -1,7 +1,7 @@
 SHELL := bash
 
 CHART := a-chart
-LOG := test/log
+DEBUG := test/debug
 
 ifneq (,$(PREFIX))
 ifneq (/$(shell cut -c2- <<<"$(PREFIX)"),$(PREFIX))
@@ -22,7 +22,7 @@ test:
 	bash test/test.sh
 
 clean:
-	$(RM) -r $(CHART) $(LOG)
+	$(RM) -r $(CHART) $(DEBUG)
 
 
 install-helmys: $(PREFIX)/bin

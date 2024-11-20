@@ -50,9 +50,9 @@ post-render() (
   # Read rendered YAML from Helm:
   yaml=$(cat)
 
-  # Log input if HELMYS_INPUT set:
-  if [[ ${HELMYS_INPUT-} ]]; then
-    echo "$yaml" > "$HELMYS_INPUT"
+  # Write input if HELMYS_DEBUG_INPUT set:
+  if [[ ${HELMYS_DEBUG_INPUT-} ]]; then
+    echo "$yaml" > "$HELMYS_DEBUG_INPUT"
   fi
 
   # Enable YAMLScript code in the YAML and import the 'helpers.ys' library,
@@ -81,8 +81,8 @@ if not(helmys-doc):
             .join("\n--- !yamlscript/v0:\n")
 ' <<<"$yaml" |
     (
-      if [[ ${HELMYS_THRUPUT-} ]]; then
-        tee "$HELMYS_THRUPUT"
+      if [[ ${HELMYS_DEBUG_THRUPUT-} ]]; then
+        tee "$HELMYS_DEBUG_THRUPUT"
       else
         cat
       fi
@@ -97,8 +97,8 @@ if not(helmys-doc):
 
   # Print the evaluated content back to helm; tee into a file if requested:
   echo "$yaml" | (
-    if [[ ${HELMYS_OUTPUT-} ]]; then
-      tee "$HELMYS_OUTPUT"
+    if [[ ${HELMYS_DEBUG_OUTPUT-} ]]; then
+      tee "$HELMYS_DEBUG_OUTPUT"
     else
       cat
     fi

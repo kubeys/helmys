@@ -105,15 +105,15 @@ It's really that simple!
 
 HelmYS has some environment variables that you might want to use.
 
-These 3 are for logging the YAML states during `helmys` post rendering.
+These 3 are for debugging the YAML states during `helmys` post rendering.
 
-* `HELMYS_INPUT=<file-name>`
+* `HELMYS_DEBUG_INPUT=<file-name>`
   Name of a file to write the text that `helmys` read (from `helm`) on stdin.
-* `HELMYS_THRUPUT=<file-name>`
+* `HELMYS_DEBUG_THRUPUT=<file-name>`
   Name of a file to write the text after `helmys` altered it by moving the
   `helmys.yaml` template content to the front and adding the tags required by
   YAMLScript.
-* `HELMYS_OUTPUT=<file-name>`
+* `HELMYS_DEBUG_OUTPUT=<file-name>`
   Name of a file to write the text after `helmys` has evaluated everything as
   YAMLScript.
 
@@ -133,7 +133,7 @@ goes.
 
 Next it does the same thing with all the templates converted to YAMLScript.
 
-It logs all the YAML states in files under `test/log/`.
+It writes all the YAML states in files under `test/debug/`.
 
 ### `make clean`
 
