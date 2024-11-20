@@ -117,6 +117,13 @@ These 3 are for debugging the YAML states during `helmys` post rendering.
   Name of a file to write the text after `helmys` has evaluated everything as
   YAMLScript.
 
+Templates using YAMLScript must start with a `!yamlscript/v0:` tag.
+Use this in situations where a template may or may not have the tag but using
+`helmys` is necessary:
+
+* `HELMYS_AUTO_TAG=1`
+  Add the `!yamlscript/v0:` to templates that don't have one.
+
 See the shell function wrapping section below for:
 
 * `HELMYS_PASS_THROUGH=1`

@@ -75,10 +75,20 @@ if not(helmys-doc):
 
   else:
     helm-docs =: yaml-docs
-                  .remove(/(?m)^Chart += *:/)
-    print: helm-docs
-            .cons(helmys-doc)
-            .join("\n--- !yamlscript/v0:\n")
+                   .remove(/(?m)^Chart += *:/)
+    helm-docs =:
+      map _ helm-docs:
+        fn(doc):
+          if ENV.HELMYS_AUTO_TAG:
+            replace doc _:
+              /(?m)^(?:--- +)?!yamlscript\/v0.*/
+            else: doc
+            # TODO warn if doc should have !yamlscript/v0:
+    helm-docs =: helm-docs.cons(helmys-doc)
+    print:
+      if ENV.HELMYS_AUTO_TAG:
+        helm-docs.join("\n--- !yamlscript/v0:\n")
+        helm-docs.join("\n---\n")
 ' <<<"$yaml" |
     (
       if [[ ${HELMYS_DEBUG_THRUPUT-} ]]; then
