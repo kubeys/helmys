@@ -152,7 +152,7 @@ Here's an example for Bash:
 helm() (
   if [[ ${1-} == install ]]; then
     export HELMYS_PASS_THROUGH=1
-    command helm "$@" --passthrough=helmys
+    command helm "$@" --post-renderer=helmys
   else
     command helm "$@"
   fi
