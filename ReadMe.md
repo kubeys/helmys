@@ -37,7 +37,7 @@ templating.
 See this gist for a comparison of a full conversion:
 
 <!-- XXX Replace gist with nicer yamlscript.org/doc/... page -->
-https://gist.github.com/ingydotnet/c0afc0071133c696c5b4f17b5ee86b98
+https://gist.github.com/ingydotnet/b00a0dd3b7547088d6a1a85747b0c20d
 
 In addition, templates that use YAMLScript exclusively for templating are valid
 YAML files, thus various YAML tools like `yamllint` can be used on them.
