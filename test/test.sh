@@ -2,35 +2,59 @@
 
 set -euo pipefail
 
+export HELMYS_TEST=1
+export PATH=$PWD/bin:$PATH
+
 CHART=a-chart
 NAME=name-$(date +%s)
-HELMYS_INPUT=$PWD/helmys-install-input.yaml
-HELMYS_THRUPUT=$PWD/helmys-install-thruput.yaml
-HELMYS_OUTPUT=$PWD/helmys-install-output.yaml
+LOG=test/log
 
 command -v ys >/dev/null || {
   echo "ys not installed"
   exit 1
 }
 
-rm -fr "$CHART" "$HELMYS_INPUT"
-rm -fr "$CHART" "$HELMYS_THRUPUT"
-rm -fr "$CHART" "$HELMYS_OUTPUT"
+rm -fr "$CHART" "$LOG"
+mkdir -p "$LOG"
 
 (
   set -x
 
-  PATH=$PWD/bin:$PATH
-  HELMYS_INPUT=$HELMYS_INPUT
-  HELMYS_THRUPUT=$HELMYS_THRUPUT
-  HELMYS_OUTPUT=$HELMYS_OUTPUT
-  export PATH HELMYS_INPUT HELMYS_THRUPUT HELMYS_OUTPUT
-
   helm create "$CHART"
+
+  export HELMYS_PASS_THROUGH=1
+
+  helm install "$NAME-pass" "$CHART" --post-renderer=helmys
+)
+
+echo $'\n\n\e[32m*** IT WORKED (w/ HELMYS_PASS_THROUGH=1) ***\e[0m\n\n'
+
+(
+  set -x
+
+  HELMYS_INPUT=$LOG/GO-helmys-install-input-go.yaml
+  HELMYS_THRUPUT=$LOG/GO-helmys-install-thruput-go.yaml
+  HELMYS_OUTPUT=$LOG/GO-helmys-install-output-go.yaml
+  export HELMYS_INPUT HELMYS_THRUPUT HELMYS_OUTPUT
 
   helmys init "$CHART"
 
-  helm install "$NAME" "$CHART" --post-renderer=helmys
+  helm install "$NAME-go" "$CHART" --post-renderer=helmys
 )
 
-echo $'\n\n\e[32m*** IT WORKED!!! ***\e[0m\n\n'
+echo $'\n\n\e[32m*** IT WORKED (w/ stock Go templates) ***\e[0m\n\n'
+
+(
+  set -x
+
+  HELMYS_INPUT=$LOG/YS-helmys-install-input.yaml
+  HELMYS_THRUPUT=$LOG/YS-helmys-install-thruput.yaml
+  HELMYS_OUTPUT=$LOG/YS-helmys-install-output.yaml
+  export HELMYS_INPUT HELMYS_THRUPUT HELMYS_OUTPUT
+
+  cp test/templates/*.yaml "$CHART/templates/"
+
+  helm install "$NAME-ys" "$CHART" --post-renderer=helmys
+)
+
+echo $'\n\n\e[32m*** IT WORKED (w/ all YAMLScript templates) ***\e[0m\n\n'

@@ -1,9 +1,7 @@
 SHELL := bash
 
 CHART := a-chart
-IN := helmys-install-input.yaml
-THRU := helmys-install-thruput.yaml
-OUT := helmys-install-output.yaml
+LOG := test/log
 
 ifneq (,$(PREFIX))
 ifneq (/$(shell cut -c2- <<<"$(PREFIX)"),$(PREFIX))
@@ -19,6 +17,14 @@ default:
 
 install: install-helmys install-ys
 
+.PHONY: test
+test:
+	bash test/test.sh
+
+clean:
+	$(RM) -r $(CHART) $(LOG)
+
+
 install-helmys: $(PREFIX)/bin
 ifeq (,$(PREFIX))
 	$(error requires the 'PREFIX' variable to be set)
@@ -33,17 +39,13 @@ endif
 	  curl -s https://yamlscript.org/install | \
 	  BIN=1 PREFIX="$$PREFIX" bash
 
-.PHONY: test
-test:
-	bash test/test.sh
 
-hel-uninstall-all:
+# For developer testing:
+helm-uninstall-all-charts:
 ifneq (,$(HELMYS_DEV))
 	for n in $$(helm list | tail -n+2 | cut -f1); do \
 	  helm uninstall $$n; \
 	done
+else
+	@echo 'Ignoring. Set HELMYS_DEV=1 to uninstall all charts.'
 endif
-
-clean:
-	$(RM) -r $(CHART)
-	$(RM) $(IN) $(THRU) $(OUT)

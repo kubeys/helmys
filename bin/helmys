@@ -14,10 +14,10 @@ main() (
   else
     cmd=${1-}; shift
     case "$cmd" in
-      init) do-init "$@";;
-      # install) do-install "$@";;
-      # template) do-template "$@";;
-      *) die "Invalid command: 'helmys $*'";;
+      init)
+        do-init "$@";;
+      *)
+        die "Invalid command: 'helmys $*'";;
     esac
   fi
 )
@@ -28,7 +28,7 @@ do-init() (
         "Expected 'helmys init <chart-dir>'"
 
   chart=$1
-  [[ -d $chart && -d $chart/templates ]] ||
+  [[ -d $chart/templates ]] ||
     die "'$chart' is not a chart directory"
   [[ -f $chart/bin/helmys ]] &&
     die "'$chart' is not a chart directory"
@@ -38,72 +38,48 @@ do-init() (
      ! -f $templates/helpers.ys
   ]] || die "'$chart' already initialized"
 
-  (
-    cd "$templates" || exit
-    curl -sO 'https://raw.githubusercontent.com/kubeys/helmys/refs/heads/main/templates/helmys.yaml'
-    curl -sO 'https://raw.githubusercontent.com/kubeys/helmys/refs/heads/main/templates/helpers.ys'
-  )
+  if [[ ${HELMYS_TEST-} ]]; then
+    cp templates/helmys.yaml "$templates"
+  else
+    raw='https://raw.githubusercontent.com/kubeys/helmys/refs/heads/main'
+    curl -s -o "$templates/helmys.yaml" "$raw/templates/helmys.yaml"
+  fi
 )
 
 post-render() (
   # Read rendered YAML from Helm:
   yaml=$(cat)
+
+  # Log input if HELMYS_INPUT set:
   if [[ ${HELMYS_INPUT-} ]]; then
     echo "$yaml" > "$HELMYS_INPUT"
   fi
 
-  if [[ -z ${HELMYS_CHART-} ]]; then
-    # Find chart path from yaml text:
-    chart_path=$(
-      <<<"$yaml" ys -e '
-text =: IN:slurp
-m =: text =~ qr("(?m)^# Source:\ (.*)/templates/helmys.yaml$")
-when-not m:
-  die: "templates/helmys.yaml not seen by helmys"
-path =: m.1 ||| "."
-say: path
-'
-    )
-    [[ -e $chart_path/templates/helmys.yaml ]] ||
-      die "Can't determine chart path." \
-          "Please set HELMYS_CHART=<path/to/chart>"
-    export HELMYS_CHART=$chart_path
-  fi
-
-  cd "$HELMYS_CHART" ||
-    die "Can't cd to '$HELMYS_CHART'"
-
-  # Get the instance name from the YAML:
-  # XXX Can we get this a better way?
-  HELM_RELEASE=$(
-    <<<"$yaml" \
-    ys - -e \
-      'stream().filter(\(_.HELMYS)):first
-               .dissoc("HELMYS"):json/dump:say'
-  )
-
-  # Make sure we got it:
-  [[ $HELM_RELEASE ]] ||
-    die "helmys Error: 'app.kubernetes.io/instance:' not found in YAML"
-
   # Enable YAMLScript code in the YAML and import the 'helpers.ys' library,
   # and the pipe to ys again to evaulate any YAMLScript code used:
   yaml=$(
-    export HELM_RELEASE
-    export YSPATH='./templates/'
-
     ys -e '
-    slurp(IN)
-      .split("\n---\n")
-      .remove(\(_ =~ /(?m)^HELMYS:/))
-      .remove(\(_ =~ /(?m)^Chart =:/))
-      .join("\n---\n")
-      .replace(qr("(?m)^!yamlscript/v0:.*\n"))
-      .replace(/(?m)^:use helpers:.*\n/)
-      .replace(/(?m)^---$/ "--- !yamlscript/v0:")
-      .replace(/^(.*)\n/ "$1\n:use \"helpers\":\n")
-      .print()
-    ' <<<"$yaml" |
+yaml-in =: slurp(IN)
+yaml-docs =: yaml-in
+               .split(/(?m)^---\n/):rest
+helmys-doc =: yaml-docs
+                .filter(/(?m)^Chart += *:/):first
+
+if not(helmys-doc):
+  if not(ENV.HELMYS_PASS_THROUGH):
+    die: |
+      No `templates/helmys.yaml` template found for `--post-renderer=helmys`.
+      Set `export HELMYS_PASS_THROUGH=1` to allow any chart to install.
+    else:
+      print: yaml-in
+
+  else:
+    helm-docs =: yaml-docs
+                  .remove(/(?m)^Chart += *:/)
+    print: helm-docs
+            .cons(helmys-doc)
+            .join("\n--- !yamlscript/v0:\n")
+' <<<"$yaml" |
     (
       if [[ ${HELMYS_THRUPUT-} ]]; then
         tee "$HELMYS_THRUPUT"
