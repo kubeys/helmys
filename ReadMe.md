@@ -126,7 +126,7 @@ Use this in situations where a template may or may not have the tag but using
 
 See the shell function wrapping section below for:
 
-* `HELMYS_PASS_THROUGH=1`
+* `HELMYS_PASSTHROUGH=1`
   Used to allow `--post-renderer=helmys` to work on any chart.
 
 
@@ -158,7 +158,7 @@ Here's an example for Bash:
 ```
 helm() (
   if [[ ${1-} == install ]]; then
-    export HELMYS_PASS_THROUGH=1
+    export HELMYS_PASSTHROUGH=1
     command helm "$@" --post-renderer=helmys
   else
     command helm "$@"
@@ -170,7 +170,7 @@ This will add the `--post-renderer=helmys` for you for `helm install` commands.
 
 Note that `helmys` expects to find the `helmys.yaml` content it the data passed
 to it.
-Setting the environment variable `HELMYS_PASS_THROUGH=1` will make ignore that
+Setting the environment variable `HELMYS_PASSTHROUGH=1` will make ignore that
 check, thus allowing any chart to install with `--post-renderer=helmys`.
 
 Also note that this is currently experimental and subject to change.
