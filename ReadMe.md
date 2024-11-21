@@ -10,7 +10,7 @@ Installation:
 
 ```
 $ git clone https://github.com/kubeys/helmys
-$ make -C helmys install PREFIX=~/.local
+$ make -C helmys install PREFIX=$HOME/.local
 ```
 
 Chart Setup:
@@ -159,7 +159,7 @@ Here's an example for Bash:
 helm() (
   if [[ ${1-} == install ]]; then
     export HELMYS_PASSTHROUGH=1
-    command helm "$@" --post-renderer=helmys
+    (set -x; command helm "$@" --post-renderer=helmys)
   else
     command helm "$@"
   fi
