@@ -1,119 +1,101 @@
-#!/usr/bin/env bash
-
-# shellcheck disable=2016
+#!/usr/bin/env ys-0
 
 # This is program provides a way to use YAMLScript for Helm templating.
-# See https://github.com/yaml/helmys for full details.
+# See https://github.com/kubeys/helmys for full details.
 
-set -euo pipefail
-shopt -s inherit_errexit 2>/dev/null || true
+defn main(*args):
+  if args.!:
+    call: post-render
+    else:
+      cmd *args =: args
+      condp eq cmd:
+        'init': do-init(args*)
+        else:
+          die: "Invalid command: 'helmys $str(args)'"
 
-main() (
-  if [[ $# -eq 0 ]]; then
-    post-render
-  else
-    cmd=${1-}; shift
-    case "$cmd" in
-      init)
-        do-init "$@";;
-      *)
-        die "Invalid command: 'helmys $*'";;
-    esac
-  fi
-)
+defn do-init:
+  ():
+    die: |
+      Invalid usage.
+      Expected 'helmys init <chart-dir>'
+  (_ *xs): do-init()
 
-do-init() (
-  [[ $# -eq 1 ]] ||
-    die "Invalid usage" \
-        "Expected 'helmys init <chart-dir>'"
+  (chart):
+    when-not fs-d("$chart/templates"):
+      die: "'$chart' is not a chart directory"
+    when fs-f("$chart/bin/helmys"):
+      die: "'$chart' is not a chart directory"
 
-  chart=$1
-  [[ -d $chart/templates ]] ||
-    die "'$chart' is not a chart directory"
-  [[ -f $chart/bin/helmys ]] &&
-    die "'$chart' is not a chart directory"
+    templates =: "$chart/templates"
+    when fs-f("$templates/helmys.yaml"):
+      die: "'$chart' already initialized"
 
-  templates=$chart/templates
-  [[ ! -f $templates/helmys.yaml &&
-     ! -f $templates/helpers.ys
-  ]] || die "'$chart' already initialized"
+    if ENV.HELMYS_TEST:
+      sh: "cp templates/helmys.yaml $templates"
+      else:
+        raw =: "https://raw.githubusercontent.com/\
+                kubeys/helmys/refs/heads/main"
+        sh: "curl -s -o $templates/helmys.yaml
+               $raw/templates/helmys.yaml"
 
-  if [[ ${HELMYS_TEST-} ]]; then
-    cp templates/helmys.yaml "$templates"
-  else
-    raw='https://raw.githubusercontent.com/kubeys/helmys/refs/heads/main'
-    curl -s -o "$templates/helmys.yaml" "$raw/templates/helmys.yaml"
-  fi
-)
-
-post-render() (
+defn post-render():
   # Read rendered YAML from Helm:
-  yaml=$(cat)
+  yaml-in =: slurp(IN)
 
   # Write input if HELMYS_DEBUG_INPUT set:
-  if [[ ${HELMYS_DEBUG_INPUT-} ]]; then
-    echo "$yaml" > "$HELMYS_DEBUG_INPUT"
-  fi
+  when+ ENV.HELMYS_DEBUG_INPUT:
+    spit: _ yaml-in
 
-  # Enable YAMLScript code in the YAML and import the 'helpers.ys' library,
-  # and the pipe to ys again to evaulate any YAMLScript code used:
-  yaml=$(
-    ys -e '
-yaml-in =: slurp(IN)
-yaml-docs =: yaml-in
-               .split(/(?m)^---\n/):rest
-helmys-doc =: yaml-docs
-                .filter(/(?m)^Chart += *:/):first
+  yaml-docs =: yaml-in
+                .split(/(?m)^---\n/):rest
+  helmys-doc =: yaml-docs
+                  .filter(/(?m)^Chart += *:/):first
 
-if not(helmys-doc):
-  if not(ENV.HELMYS_PASSTHRU):
-    die: |
-      No `templates/helmys.yaml` template found for `--post-renderer=helmys`.
-      Set `export HELMYS_PASSTHRU=1` to allow any chart to install.
-    else:
-      print: yaml-in
+  yaml-thru =:
+    if not(helmys-doc):
+      if not(ENV.HELMYS_PASSTHRU):
+        die: |
+          No `templates/helmys.yaml` template found for `--post-renderer=helmys`.
+          Set `export HELMYS_PASSTHRU=1` to allow any chart to install.
+        else:
+          yaml-in
 
-  else:
-    helm-docs =: yaml-docs.remove(/(?m)^Chart += *:/)
-    helm-docs =:
-      map _ helm-docs:
-        fn(doc):
-          if ENV.HELMYS_AUTO_TAG:
-            replace doc _ "":
-              /(?m)^(?:--- +)?!yamlscript\/v0.*/
-            else: doc
-            # TODO warn if doc should have !yamlscript/v0:
-    helm-docs =: helm-docs.cons(helmys-doc)
-    print:
-      if ENV.HELMYS_AUTO_TAG:
-        helm-docs.join("\n--- !yamlscript/v0:\n")
-        helm-docs.join("\n---\n")
-' <<<"$yaml" |
-    (
-      if [[ ${HELMYS_DEBUG_THRUPUT-} ]]; then
-        tee "$HELMYS_DEBUG_THRUPUT"
-      else
-        cat
-      fi
-    ) |
-    ys -Ys -
-  )
+      else:
+        helm-docs =: yaml-docs.remove(/(?m)^Chart += *:/)
+        helm-docs =:
+          map _ helm-docs:
+            fn(doc):
+              if ENV.HELMYS_AUTO_TAG:
+                replace doc _ "":
+                  /(?m)^(?:--- +)?!yamlscript\/v0.*/
+                else: doc
+                # TODO warn if doc should have !yamlscript/v0:
+        helm-docs =: helm-docs.cons(helmys-doc)
+        if ENV.HELMYS_AUTO_TAG:
+          helm-docs.join("\n--- !yamlscript/v0:\n")
+          helm-docs.join("\n---\n")
 
-  # Make sure we have output, because helm's --post-renderer won't complain if
-  # it gets no content back:
-  [[ $yaml ]] ||
-    die "helmys failed"
+  # Write thruput if HELMYS_DEBUG_THRUPUT set:
+  when+ ENV.HELMYS_DEBUG_THRUPUT:
+    spit: _ yaml-thru
 
-  # Print the evaluated content back to helm; tee into a file if requested:
-  echo "$yaml" | (
-    if [[ ${HELMYS_DEBUG_OUTPUT-} ]]; then
-      tee "$HELMYS_DEBUG_OUTPUT"
-    else
-      cat
-    fi
-  )
-)
+  yaml-out =:
+    try:
+      do:
+        # XXX shell out to ys until std/eval-stream is available
+        res =:
+          sh {:in yaml-thru}: "ys -Ys -"
+        when+ res.err.?:
+          die: "helmys failed to render YAMLScript helm templates:\n$_"
+        get res: :out
+      catch e:
+        die: "helmys failed to render YAMLScript helm templates:\n$e"
 
-die() { printf '%s\n' "$@" >&2; exit 1; }
+  when yaml-out.!:
+    die: "helmys produced no output from YAMLScript helm templates"
 
-main "$@"
+  # Write output if HELMYS_DEBUG_OUTPUT set:
+  when+ ENV.HELMYS_DEBUG_OUTPUT:
+    spit: _ yaml-out
+
+  print: yaml-out
