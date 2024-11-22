@@ -22,12 +22,12 @@ mkdir -p "$DEBUG"
 
   helm create "$CHART"
 
-  export HELMYS_PASSTHROUGH=1
+  export HELMYS_PASSTHRU=1
 
   helm install "$NAME-pass" "$CHART" --post-renderer=helmys
 )
 
-echo $'\n\n\e[32m*** IT WORKED (w/ HELMYS_PASSTHROUGH=1) ***\e[0m\n\n'
+echo $'\n\n\e[32m*** IT WORKED (w/ HELMYS_PASSTHRU=1) ***\e[0m\n\n'
 
 (
   set -x

@@ -66,10 +66,10 @@ helmys-doc =: yaml-docs
                 .filter(/(?m)^Chart += *:/):first
 
 if not(helmys-doc):
-  if not(ENV.HELMYS_PASSTHROUGH):
+  if not(ENV.HELMYS_PASSTHRU):
     die: |
       No `templates/helmys.yaml` template found for `--post-renderer=helmys`.
-      Set `export HELMYS_PASSTHROUGH=1` to allow any chart to install.
+      Set `export HELMYS_PASSTHRU=1` to allow any chart to install.
     else:
       print: yaml-in
 
