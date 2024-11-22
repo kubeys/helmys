@@ -3,13 +3,18 @@
 # This is program provides a way to use YAMLScript for Helm templating.
 # See https://github.com/kubeys/helmys for full details.
 
+HELMYS-VERSION =: '0.1.2'
+
 defn main(*args):
   if args.!:
     call: post-render
     else:
       cmd *args =: args
       condp eq cmd:
-        'init': do-init(args*)
+        'init':
+          do-init: args*
+        '--version':
+          say: "helmys v$HELMYS-VERSION"
         else:
           die: "Invalid command: 'helmys $str(args)'"
 
