@@ -74,13 +74,12 @@ if not(helmys-doc):
       print: yaml-in
 
   else:
-    helm-docs =: yaml-docs
-                   .remove(/(?m)^Chart += *:/)
+    helm-docs =: yaml-docs.remove(/(?m)^Chart += *:/)
     helm-docs =:
       map _ helm-docs:
         fn(doc):
           if ENV.HELMYS_AUTO_TAG:
-            replace doc _:
+            replace doc _ "":
               /(?m)^(?:--- +)?!yamlscript\/v0.*/
             else: doc
             # TODO warn if doc should have !yamlscript/v0:

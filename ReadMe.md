@@ -153,15 +153,22 @@ If you find yourself installing charts with Helm 3 and some use normal Go
 syntax and some use YAMLScript, one thing you can choose to do is add a
 wrapper function to your shell that makes it work for either.
 
-Here's an example for Bash:
+Here's an example for Bash or Zsh:
 
 ```
 helm() (
-  if [[ ${1-} == install ]]; then
+  set -e
+  HELM=$(type -a helm);
+  HELM=/${HELM##* /}
+  [[ -x $HELM ]] || {
+    echo "Can't find 'helm' command" >&2
+    exit 1
+  }
+  if [[ ${1-} =~ ^(install|upgrade|template)$ ]]; then
     export HELMYS_PASSTHROUGH=1
-    (set -x; command helm "$@" --post-renderer=helmys)
+    (set -x; "$HELM" "$@" --post-renderer=helmys)
   else
-    command helm "$@"
+    "$HELM" "$@"
   fi
 )
 ```
