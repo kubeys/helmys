@@ -5,18 +5,16 @@
 
 HELMYS-VERSION =: '0.1.2'
 
-defn main(*args):
-  if args.!:
-    call: post-render
-    else:
-      cmd *args =: args
-      condp eq cmd:
-        'init':
-          do-init: args*
-        '--version':
-          say: "helmys v$HELMYS-VERSION"
-        else:
-          die: "Invalid command: 'helmys $str(args)'"
+defn main:
+  (): post-render()
+  (cmd *args):
+    condp eq cmd:
+      'init':
+        do-init: args*
+      '--version':
+        say: "helmys v$HELMYS-VERSION"
+      else:
+        die: "Invalid command: 'helmys $str(args)'"
 
 defn do-init:
   ():
