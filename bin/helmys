@@ -5,25 +5,34 @@
 
 HELMYS-VERSION =: '0.1.2'
 
+# When helmys is called with no args it is assumed to be a post renderer and
+# will read from stdin.
+#
+# When called with args, it is a CLI utility. Currently its only function is to
+# initialize YAMLScript support in an existing Helm chart.
 defn main:
   (): post-render()
   (cmd *args):
     condp eq cmd:
       'init':
         do-init: args*
+      # TODO: Add 'update' support.
       '--version':
         say: "helmys v$HELMYS-VERSION"
       else:
         die: "Invalid command: 'helmys $str(args)'"
 
+# Initialize a Helm chart by adding 2 helmys template files.
+# Error if chart dir is not actually a Helm chart or is already initialized.
 defn do-init:
-  ():
+  # 'helmys init' expects no extra args:
+  (_ *xs):
     die: |
       Invalid usage.
       Expected 'helmys init <chart-dir>'
-  (_ *xs): do-init()
 
   (chart):
+    # Check that dir is an uninitialized Helm chart:
     when-not fs-d("$chart/templates"):
       die: "'$chart' is not a chart directory"
     when fs-f("$chart/bin/helmys"):
@@ -33,55 +42,83 @@ defn do-init:
     when fs-f("$templates/helmys.yaml"):
       die: "'$chart' already initialized"
 
+    # Ininitialize the Helm chart:
     if ENV.HELMYS_TEST:
-      sh: "cp templates/helmys.yaml $templates"
+      # Init with local files for `make test`:
+      sh: "cp templates/helmys.yaml
+              templates/helpers.yaml
+              $templates"
       else:
+        # Init with files from source repository:
         raw =: "https://raw.githubusercontent.com/\
                 kubeys/helmys/refs/heads/main"
         sh: "curl -s -o $templates/helmys.yaml
                $raw/templates/helmys.yaml"
+        sh: "curl -s -o $templates/helpers.yaml
+               $raw/templates/helpers.yaml"
+
+# Make a regex to find a chart by name:
+defn template-re(name):
+  name .=: replace('.' '\.')
+  qr: "^# Source:\ .*/templates/$name"
 
 defn post-render():
   # Read rendered YAML from Helm:
   yaml-in =: slurp(IN)
 
   # Write input if HELMYS_DEBUG_INPUT set:
-  when+ ENV.HELMYS_DEBUG_INPUT:
-    spit: _ yaml-in
+  when+ ENV.HELMYS_DEBUG_INPUT: _.spit(yaml-in)
 
-  yaml-docs =: yaml-in
-                .split(/(?m)^---\n/):rest
-  helmys-doc =: yaml-docs
-                  .filter(/(?m)^Chart += *:/):first
+  # Split YAML stream into docs:
+  yaml-docs =:
+    yaml-in
+      .split(/(?m)^---\n/):rest
+  # Find helmys.yaml doc:
+  helmys-doc =:
+    yaml-docs
+      .filter(template-re('helmys.yaml')):first
+  # Find helpers.yaml doc:
+  helpers-doc =:
+    yaml-docs
+      .filter(template-re('helpers.yaml')):first
 
+  # Find the helmys charts and put them at the start of the stream.
+  # They define things needed by YAMLScript in Helm templates.
   yaml-thru =:
-    if not(helmys-doc):
+    if not(helmys-doc) || not(helpers-doc):
+      # Setting the HELMYS_PASSTHRU environment variable allows helmys to be
+      # used as a post-renderer even when the chart doesn't use HelmYS at all.
+      # This is to support the helm command being wrapped in a way that always
+      # uses `--post-renderer=helmys` so that you can use `helm install` on any
+      # chart without needing to knw in advance if it uses HelmYS for
+      # templating.
       if not(ENV.HELMYS_PASSTHRU):
         die: |
-          No `templates/helmys.yaml` template found for `--post-renderer=helmys`.
+          HelmYS templates missing for `--post-renderer=helmys`.
           Set `export HELMYS_PASSTHRU=1` to allow any chart to install.
         else:
           yaml-in
 
       else:
-        helm-docs =: yaml-docs.remove(/(?m)^Chart += *:/)
-        helm-docs =:
-          map _ helm-docs:
-            fn(doc):
-              if ENV.HELMYS_AUTO_TAG:
-                replace doc _ "":
-                  /(?m)^(?:--- +)?!yamlscript\/v0.*/
-                else: doc
-                # TODO warn if doc should have !yamlscript/v0:
-        helm-docs =: helm-docs.cons(helmys-doc)
-        if ENV.HELMYS_AUTO_TAG:
-          helm-docs.join("\n--- !yamlscript/v0:\n")
-          helm-docs.join("\n---\n")
+        # Remove helmys templates from the input stream:
+        helm-docs =: yaml-docs.remove(template-re('helmys.yaml'))
+        helm-docs =: helm-docs.remove(template-re('helpers.yaml'))
+
+        # TODO - Warn if a document looks like a YS template but is missing
+        # !yamlscript/v0:
+
+        # Re-add the helmys templates to the start of the stream:
+        join "\n---\n":
+          helm-docs
+            .cons(helpers-doc)
+            .cons(helmys-doc)
 
   # Write thruput if HELMYS_DEBUG_THRUPUT set:
   when+ ENV.HELMYS_DEBUG_THRUPUT:
-    spit: _ yaml-thru
+    _.spit(yaml-thru)
 
+  # Generate the final YAML output by using YAMLScript to evaluate the now
+  # adjusted input stream.
   yaml-out =:
     try:
       do:
@@ -89,16 +126,18 @@ defn post-render():
         res =:
           sh {:in yaml-thru}: "ys -Ys -"
         when+ res.err.?:
-          die: "helmys failed to render YAMLScript helm templates:\n$_"
+          die: -"helmys failed to render YAMLScript helm templates:\n" + _
         get res: :out
       catch e:
         die: "helmys failed to render YAMLScript helm templates:\n$e"
 
+  # Assert that the final output is not empty:
   when yaml-out.!:
     die: "helmys produced no output from YAMLScript helm templates"
 
   # Write output if HELMYS_DEBUG_OUTPUT set:
   when+ ENV.HELMYS_DEBUG_OUTPUT:
-    spit: _ yaml-out
+    _.spit(yaml-out)
 
+  # Write the final YAML output to STDOUT:
   print: yaml-out

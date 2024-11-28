@@ -1,53 +1,7 @@
 !yamlscript/v0
-
 #------------------------------------------------------------------------------
 # Use Go templating to expand the base Release, Chart and Values variables
 #------------------------------------------------------------------------------
-
 Release =:: {{- with .Release }}{{ toYaml . | nindent 2 }}{{ end }}
-Chart =:: {{- with .Chart }}{{ toYaml . | nindent 2 }}{{ end }}
-Values =:: {{- with .Values }}{{ toYaml . | nindent 2 }} {{ end }}
-
-#------------------------------------------------------------------------------
-# Define YAMLScript variables and functions to use in templates
-#------------------------------------------------------------------------------
-
-# Define 2 trunc functions use in default 'helm create' chart:
-defn trunc(s): take(63 s).str(*).replace(/-$/)
-defn trunc+(s): s:trunc.replace(/\+/ '_')
-
-# Expand the name of the chart:
-chart-name =: trunc(Values.nameOverride ||| Chart.name)
-
-# Create a default fully qualified app name.
-# We truncate at 63 chars because some Kubernetes name fields are limited to
-# this (by the DNS naming spec).
-# If release name contains chart name it will be used as a full name.
-chart-fullname =:
-  if Values.fullnameOverride.?:
-    then: Values.fullnameOverride:trunc
-    else:
-      name =: Values.nameOverride ||| Chart.name
-      if name.has?(Release.Name):
-        trunc: Release.Name
-        format "%s-%s": Release.Name name
-
-# Selector labels:
-selectorLabels =::
-  app.kubernetes.io/name:: Chart.name
-  app.kubernetes.io/instance:: Release.Name
-
-# Chart labels:
-chart-labels =:
-  apply merge::
-  - helm.sh/chart:: "$(Chart.name)-$(Chart.version)"
-  - ! selectorLabels
-  - app.kubernetes.io/version:: Chart.appVersion
-    app.kubernetes.io/managed-by:: Release.Service
-
-# Create the name of the service account to use:
-serviceAccountName =:
-  or? Values.serviceAccount.name:
-    if Values.serviceAccount.create:
-      chart-fullname
-      'default'
+Chart =::   {{- with .Chart   }}{{ toYaml . | nindent 2 }}{{ end }}
+Values =::  {{- with .Values  }}{{ toYaml . | nindent 2 }}{{ end }}
