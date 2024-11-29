@@ -22,8 +22,9 @@ spec:
       containers:
       - name:: Chart.name
         securityContext:: Values.securityContext
-        image:: "$(Values.image.repository):\
-                 $(Values.image.tag ||| Chart.appVersion)"
+        image::
+          "$(Values.image.repository):\
+           $(Values.image.tag ||| Chart.appVersion)"
         imagePullPolicy:: Values.image.pullPolicy
         ports:
         - name: http
@@ -32,7 +33,8 @@ spec:
         livenessProbe:: Values.livenessProbe
         readinessProbe:: Values.readinessProbe
         resources:: Values.resources
-        :when+ Values.volumeMounts.?:: {volumeMounts:: _}
+        :when+ Values.volumeMounts.?::
+         volumeMounts:: _
       :when+ Values.volumes.?::      {volumes:: _}
       :when+ Values.nodeSelector.?:: {nodeSelector:: _}
       :when+ Values.affinity.?::     {affinity:: _}
