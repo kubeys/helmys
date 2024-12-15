@@ -9,10 +9,13 @@ CHART=a-chart
 NAME=name-$(date +%s)
 DEBUG=test/debug
 
-command -v ys >/dev/null || {
-  echo "ys not installed"
+die() {
+  printf '%s\n' "$@"
   exit 1
 }
+
+command -v ys >/dev/null ||
+  die "ys not installed"
 
 rm -fr "$CHART" "$DEBUG"
 mkdir -p "$DEBUG"
@@ -54,7 +57,7 @@ echo $'\n\n\e[32m*** IT WORKED (w/ stock Go templates) ***\e[0m\n\n'
 
   cp test/templates/*.yaml "$CHART/templates/"
 
-  helm install "$NAME-ys" "$CHART" --post-renderer=helmys
+  helmys install "$NAME-ys" "$CHART"
 )
 
 echo $'\n\n\e[32m*** IT WORKED (w/ all YAMLScript templates) ***\e[0m\n\n'
