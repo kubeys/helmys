@@ -1,6 +1,6 @@
 --- !yamlscript/v0
 #------------------------------------------------------------------------------
-# Define YAMLScript variables and functions to use in templates
+# Define YS variables and functions to use in templates.
 #------------------------------------------------------------------------------
 defn trunc(s): take(63 s).str(*).replace(/-$/)
 

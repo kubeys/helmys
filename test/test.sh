@@ -60,4 +60,4 @@ echo $'\n\n\e[32m*** IT WORKED (w/ stock Go templates) ***\e[0m\n\n'
   helmys install "$NAME-ys" "$CHART"
 )
 
-echo $'\n\n\e[32m*** IT WORKED (w/ all YAMLScript templates) ***\e[0m\n\n'
+echo $'\n\n\e[32m*** IT WORKED (w/ all YS templates) ***\e[0m\n\n'
