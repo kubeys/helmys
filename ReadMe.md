@@ -214,7 +214,7 @@ including no YAMLScript at all.
 
 ## License & Copyright
 
-Copyright 2024 Ingy döt Net <ingy@ingy.net>
+Copyright 2024-2025 Ingy döt Net <ingy@ingy.net>
 
 This project is licensed under the terms of the `MIT` license.
 See the [License](https://github.com/kubeys/helmys/blob/main/License) file for
