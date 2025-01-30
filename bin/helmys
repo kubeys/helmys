@@ -53,17 +53,20 @@ defn do-init:
     # Ininitialize the Helm chart:
     if ENV.HELMYS_TEST:
       # Init with local files for `make test`:
-      shell: "cp templates/helmys.yaml
-                 templates/helpers.yaml
-                 $templates"
+      then:
+        spit "$templates/helmys.yaml":
+          slurp: 'templates/helmys.yaml'
+        spit "$templates/helpers.yaml":
+          slurp: 'templates/helpers.yaml'
+
       else:
         # Init with files from source repository:
         raw =: "https://raw.githubusercontent.com/\
                 kubeys/helmys/refs/heads/main"
-        shell: "curl -s -o $templates/helmys.yaml
-                  $raw/templates/helmys.yaml"
-        shell: "curl -s -o $templates/helpers.yaml
-                  $raw/templates/helpers.yaml"
+        spit "$templates/helmys.yaml":
+          curl: "$raw/templates/helmys.yaml"
+        spit "$templates/helpers.yaml":
+          curl: "$raw/templates/helpers.yaml"
 
 # Make a regex to find a chart by name:
 defn template-re(name):
@@ -75,7 +78,8 @@ defn post-render():
   yaml-in =: slurp(IN)
 
   # Write input if HELMYS_DEBUG_INPUT set:
-  when+ ENV.HELMYS_DEBUG_INPUT: _.spit(yaml-in)
+  when-let file ENV.HELMYS_DEBUG_INPUT:
+    spit file: yaml-in
 
   # Split YAML stream into docs:
   yaml-docs =:
@@ -113,7 +117,7 @@ defn post-render():
         helm-docs =: helm-docs.remove(template-re('helpers.yaml'))
 
         # TODO - Warn if a document looks like a YS template but is missing
-        # !yamlscript/v0:
+        # !YS v0:
 
         # Re-add the helmys templates to the start of the stream:
         join "\n---\n":
@@ -122,20 +126,15 @@ defn post-render():
             .cons(helmys-doc)
 
   # Write thruput if HELMYS_DEBUG_THRUPUT set:
-  when+ ENV.HELMYS_DEBUG_THRUPUT:
-    _.spit(yaml-thru)
+  when-let file ENV.HELMYS_DEBUG_THRUPUT:
+    spit file: yaml-thru
 
   # Generate the final YAML output by using YS to evaluate the now
   # adjusted input stream.
   yaml-out =:
     try:
-      do:
-        # XXX shell out to ys until std/eval-stream is available
-        res =:
-          sh {:in yaml-thru}: "ys -Ys -"
-        when+ res.err.?:
-          die: -"helmys failed to render YAMLScript helm templates:\n" + _
-        get res: :out
+      yaml/dump-all:
+        ys/eval-stream: yaml-thru
       catch e:
         die: "helmys failed to render YS helm templates:\n$e"
 
@@ -144,8 +143,8 @@ defn post-render():
     die: "helmys produced no output from YS helm templates"
 
   # Write output if HELMYS_DEBUG_OUTPUT set:
-  when+ ENV.HELMYS_DEBUG_OUTPUT:
-    _.spit(yaml-out)
+  when-let file ENV.HELMYS_DEBUG_OUTPUT:
+    spit file: yaml-out
 
   # Write the final YAML output to STDOUT:
   print: yaml-out
