@@ -1,4 +1,4 @@
-!yamlscript/v0
+!YS-v0
 
 #------------------------------------------------------------------------------
 # Use Go templating to expand the base Release, Chart and Values variables

@@ -3,7 +3,7 @@
 # This is program provides a way to use YS (YAMLScript) for Helm templating.
 # See https://github.com/kubeys/helmys for full details.
 
-HELMYS-VERSION =: '0.1.4'
+HELMYS-VERSION =: '0.1.5'
 
 # When helmys is called with no args it is assumed to be a post renderer and
 # will read from stdin.
@@ -24,6 +24,7 @@ defn main:
       'upgrade'  : helm-with-post-renderer(cmd args*)
 
       # TODO: Add 'update' support.
+
       '--version':
         say: "helmys v$HELMYS-VERSION"
 
@@ -117,7 +118,7 @@ defn post-render():
         helm-docs =: helm-docs.remove(template-re('helpers.yaml'))
 
         # TODO - Warn if a document looks like a YS template but is missing
-        # !YS v0:
+        # !YS-v0:
 
         # Re-add the helmys templates to the start of the stream:
         join "\n---\n":

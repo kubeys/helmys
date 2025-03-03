@@ -164,12 +164,12 @@ These 3 are for debugging the YAML states during `helmys` post rendering.
   Name of a file to write the text after `helmys` has evaluated everything as
   YS.
 
-Templates using YS must start with a `!YS v0:` tagged key-pair.
+Templates using YS must start with a `!YS-v0:` tag.
 Use this in situations where a template may or may not have the tag but using
 `helmys` is necessary:
 
 * `HELMYS_AUTO_TAG=1`
-  Add the `!YS v0:` to templates that don't have one.
+  Add the `!YS-v0:` tag to templates that don't have one.
 
 See the shell function wrapping section below for:
 
