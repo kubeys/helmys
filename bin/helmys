@@ -29,7 +29,7 @@ defn main:
         say: "helmys v$HELMYS-VERSION"
 
       else:
-        die: "Invalid command: 'helmys $str(args)'"
+        die: "Invalid helmys subcommand: '$cmd'"
 
 # Initialize a Helm chart by adding 2 helmys template files.
 # Error if chart dir is not actually a Helm chart or is already initialized.
