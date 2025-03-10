@@ -1,8 +1,13 @@
 !YS-v0
 
 #------------------------------------------------------------------------------
-# Use Go templating to expand the base Release, Chart and Values variables
+# Use Go templating to expand the Helm builtin objects.
+# See: https://helm.sh/docs/chart_template_guide/builtin_objects/
 #------------------------------------------------------------------------------
-Release =:: {{- with .Release }}{{ toYaml . | nindent 2 }}{{ end }}
-Chart =::   {{- with .Chart   }}{{ toYaml . | nindent 2 }}{{ end }}
-Values =::  {{- with .Values  }}{{ toYaml . | nindent 2 }}{{ end }}
+Release      =:: {{- with .Release      }}{{ toYaml . | nindent 2 }}{{ end }}
+Values       =:: {{- with .Values       }}{{ toYaml . | nindent 2 }}{{ end }}
+Chart        =:: {{- with .Chart        }}{{ toYaml . | nindent 2 }}{{ end }}
+Subcharts    =:: {{- with .Subcharts    }}{{ toYaml . | nindent 2 }}{{ end }}
+Capabilities =:: {{- with .Capabilities }}{{ toYaml . | nindent 2 }}{{ end }}
+Template     =:: {{- with .Template     }}{{ toYaml . | nindent 2 }}{{ end }}
+Files        =:: {{- with .Files        }}{{ toYaml . | nindent 2 }}{{ end }}
