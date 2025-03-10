@@ -87,18 +87,18 @@ defn do-init:
     if ENV.HELMYS_TEST:
       # Init with local files for `make test`:
       then:
-        spit "$templates/helmys.yaml":
-          slurp: 'templates/helmys.yaml'
-        spit "$templates/helpers.yaml":
-          slurp: 'templates/helpers.yaml'
+        write "$templates/helmys.yaml":
+          read: 'templates/helmys.yaml'
+        write "$templates/helpers.yaml":
+          read: 'templates/helpers.yaml'
 
       else:
         # Init with files from source repository:
         raw =: "https://raw.githubusercontent.com/\
                 kubeys/helmys/refs/heads/main"
-        spit "$templates/helmys.yaml":
+        write "$templates/helmys.yaml":
           curl: "$raw/templates/helmys.yaml"
-        spit "$templates/helpers.yaml":
+        write "$templates/helpers.yaml":
           curl: "$raw/templates/helpers.yaml"
 
 # Make a regex to find a chart by name:
@@ -108,11 +108,11 @@ defn template-re(name):
 
 defn post-render():
   # Read rendered YAML from Helm:
-  yaml-in =: slurp(IN)
+  yaml-in =: read(IN)
 
   # Write input if HELMYS_DEBUG_INPUT set:
   when-let file ENV.HELMYS_DEBUG_INPUT:
-    spit file: yaml-in
+    write file: yaml-in
 
   # Split YAML stream into docs:
   yaml-docs =:
@@ -160,7 +160,7 @@ defn post-render():
 
   # Write thruput if HELMYS_DEBUG_THRUPUT set:
   when-let file ENV.HELMYS_DEBUG_THRUPUT:
-    spit file: yaml-thru
+    write file: yaml-thru
 
   # Generate the final YAML output by using YS to evaluate the now
   # adjusted input stream.
@@ -177,7 +177,7 @@ defn post-render():
 
   # Write output if HELMYS_DEBUG_OUTPUT set:
   when-let file ENV.HELMYS_DEBUG_OUTPUT:
-    spit file: yaml-out
+    write file: yaml-out
 
   # Write the final YAML output to STDOUT:
   print: yaml-out
