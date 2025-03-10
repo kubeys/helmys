@@ -28,8 +28,40 @@ defn main:
       '--version':
         say: "helmys v$HELMYS-VERSION"
 
+      '-h': print-help()
+      '--help': print-help()
+
       else:
         die: "Invalid helmys subcommand: '$cmd'"
+
+defn print-help():
+  say: |
+
+    helmys - YS (YAMLScript) tool for Helm chart templates
+
+    The 'helmys' command is a Helm post-renderer that allows you to use YS code
+    in your Helm charts. See https://yamlscript.org/helmys for more info.
+
+    Usage: helm <cmd> <args> --post-renderer=helmys
+       or: helmys [<cmd>] [<arg...>]
+
+    When called with no arguments, helmys acts as a post-renderer converting
+    YAML templates containing YS code from stdin, to YAML ready for Kubernetes.
+
+    The helmys command can also be used as a handy short form for the helm
+    commands that have a '--post-renderer' option.
+    Just change 'helm' to 'helmys' in your command and you can skip typing
+    the '--post-renderer=helmys' option at the end.
+
+    Commands:
+
+      install       Shortcut for 'helm install <args> --post-renderer=helmys'
+      template      Shortcut for 'helm template ...'
+      upgrade       Shortcut for 'helm upgrade ...'
+
+      -h, --help    Print this help and exit
+      -v, --version Print the helmys command version and exit
+
 
 # Initialize a Helm chart by adding 2 helmys template files.
 # Error if chart dir is not actually a Helm chart or is already initialized.
