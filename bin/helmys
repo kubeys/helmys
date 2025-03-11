@@ -16,23 +16,26 @@ defn main:
   # Got args. Do init or proxy to helm:
   (cmd *args):
     condp eq cmd:
-      'init':
-        do-init: args*
-
-      'install'  : helm-with-post-renderer(cmd args*)
-      'template' : helm-with-post-renderer(cmd args*)
-      'upgrade'  : helm-with-post-renderer(cmd args*)
-
-      # TODO: Add 'update' support.
-
       '--version':
         say: "helmys v$HELMYS-VERSION"
 
       '-h': print-help()
       '--help': print-help()
 
+      'init': do-init(args*)
+      # TODO: Add 'update' support to update the helmys install to latest
+
+      # Call helm command adding '--post-renderer=helmys'
+      'install'  : exec-helm-with-post-renderer(cmd args*)
+      'template' : exec-helm-with-post-renderer(cmd args*)
+      'upgrade'  : exec-helm-with-post-renderer(cmd args*)
+
+      # In cmd is a alpha word then assume it's a helm command.
+      # This allows people to 'alias helm=helmys' in their shell.
       else:
-        die: "Invalid helmys subcommand: '$cmd'"
+        if cmd =~ /^[a-z]+$/:
+          exec-helm-command: cmd args*
+          die: "Invalid helmys subcommand: '$cmd'"
 
 defn print-help():
   say: |
@@ -182,10 +185,21 @@ defn post-render():
   # Write the final YAML output to STDOUT:
   print: yaml-out
 
-defn helm-with-post-renderer(cmd *args):
+# Execute helm command with same args, plus '--post-renderer=helmys':
+defn exec-helm-with-post-renderer(cmd *args):
   when args.some(\(/^--post-renderer/)):
     die: "Don't use the '--post-renderer' option with 'helmys'"
 
-  command =: "helm $cmd $joins(args) --post-renderer helmys"
+  when fs-f('values.ys'):
+    write 'values.yaml':
+      sh('ys -Y values.ys').out
+
+  command =: "helm $cmd $joins(args) --post-renderer=helmys"
+  warn: "+ $command"
+  exec: command
+
+# Execute helm command with same args:
+defn exec-helm-command(cmd *args):
+  command =: "helm $cmd $joins(args)"
   warn: "+ $command"
   exec: command
