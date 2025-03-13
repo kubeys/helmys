@@ -1,5 +1,8 @@
 SHELL := bash
 
+YS_VERSION := 0.1.94
+YS := ys-$(YS_VERSION)
+
 CHART := a-chart
 DEBUG := test/debug
 
@@ -35,9 +38,11 @@ install-ys: $(PREFIX)/bin
 ifeq (,$(PREFIX))
 	$(error requires the 'PREFIX' variable to be set)
 endif
-	[[ -f $$PREFIX/bin/ys ]] || \
+	@[[ -f $$PREFIX/bin/$(YS) ]] || ( \
+	  set -x; \
 	  curl -s https://yamlscript.org/install | \
-	  BIN=1 PREFIX="$$PREFIX" bash
+	  BIN=1 PREFIX="$$PREFIX" VERSION="$(YS_VERSION)" bash \
+	)
 
 
 # For developer testing:
