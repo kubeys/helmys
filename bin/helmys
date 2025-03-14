@@ -115,6 +115,9 @@ defn template-re(name):
   qr: "^# Source:\ .*/templates/$name"
 
 defn post-render():
+  when+ ENV.HELMYS_HOOKS.?:
+    load-hooks-library: _
+
   # Read rendered YAML from Helm:
   yaml-in =: read(IN)
 
@@ -153,14 +156,27 @@ defn post-render():
   when-let file ENV.HELMYS_DEBUG_THRUPUT:
     write file: yaml-thru
 
+  # Use YS to evaluate the now adjusted input stream.
+  data-out =:
+    try:
+      ys/eval-stream: yaml-thru
+      catch e:
+        die: "helmys failed to render YS helm templates:\n$e"
+
+  # Apply any user specified hooks:
+  hook =: value('helmys-hook-out')
+  data-out =:
+    mapv _ data-out:
+      fn(node):
+        if hook:
+          or _ node:
+            hook: node
+          else: node
+
   # Generate the final YAML output by using YS to evaluate the now adjusted
   # input stream.
   yaml-out =:
-    try:
-      yaml/dump-all:
-        ys/eval-stream: yaml-thru
-      catch e:
-        die: "helmys failed to render YS helm templates:\n$e"
+    yaml/dump-all: data-out
 
   # Assert that the final output is not empty:
   when yaml-out.!:
@@ -172,6 +188,12 @@ defn post-render():
 
   # Write the final YAML output to STDOUT:
   print: yaml-out
+
+defn load-hooks-library(lib):
+  ys/eval:
+    if lib =~ /^https:/:
+      curl: lib
+      read: lib
 
 # Execute helm command with same args, plus '--post-renderer=helmys':
 defn exec-helm-with-post-renderer(cmd *args):
