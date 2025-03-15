@@ -264,16 +264,17 @@ defn init-helpers-yaml():: |
 
 
 #------------------------------------------------------------------------------
-create-ns: gh:q
+when-not url:q:find-ns:
+  create-ns: url:q
 
-intern main:q gh-url:q:
-  fn(spec):
-    owner repo ref *path =: spec.split('/')
-    format 'https://raw.githubusercontent.com/%s/%s/refs/heads/%s/%s':
-      owner repo ref path.join('/')
+  intern url:q github-raw:q:
+    fn(spec):
+      owner repo ref *path =: spec.split('/')
+      format 'https://raw.githubusercontent.com/%s/%s/refs/heads/%s/%s':
+        owner repo ref path.join('/')
 
-intern main:q load:q:
-  fn(url):
-    if url =~ /^https:/:
-      ys/eval: curl(url)
-      ys/load-file: url
+  intern main:q load:q:
+    fn(url):
+      if url =~ /^https:/:
+        ys/eval: curl(url)
+        ys/load-file: url

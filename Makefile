@@ -15,13 +15,23 @@ $(error $(PREFIX)/bin not in PATH)
 endif
 endif
 
+export PATH := $(PWD)/bin:$(PATH)
+
 
 default:
+	helm template a-chart --post-renderer=helmys
 
 install: install-helmys install-ys
 
 .PHONY: test
-test:
+test: test-template
+
+test-all: test-install test-template
+
+test-template:
+	prove -v --merge test
+
+test-install:
 	bash test/test.sh
 
 clean:
