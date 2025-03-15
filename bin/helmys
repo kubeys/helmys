@@ -3,7 +3,7 @@
 # This is program provides a way to use YS (YAMLScript) for Helm templating.
 # See https://github.com/kubeys/helmys for full details.
 
-HELMYS-VERSION =: '0.1.6'
+HELMYS-VERSION =: '0.1.7'
 
 helm-commands =: qw(
   create dependency env get help history install lint list package plugin pull
@@ -213,3 +213,18 @@ defn exec-helm-command(cmd *args):
   command =: "helm $cmd $joins(args)"
   warn: "+ $command"
   exec: command
+
+#------------------------------------------------------------------------------
+create-ns: gh:q
+
+intern main:q gh-url:q:
+  fn(spec):
+    owner repo ref *path =: spec.split('/')
+    format 'https://raw.githubusercontent.com/%s/%s/refs/heads/%s/%s':
+      owner repo ref path.join('/')
+
+intern main:q load:q:
+  fn(url):
+    if url =~ /^https:/:
+      ys/eval: curl(url)
+      ys/load-file: url
