@@ -30,13 +30,16 @@ test::
 - cmnd: helmys template a-chart
   want:: read('test/helmys-template-output.txt')
 
-- cmnd: cp test/templates/*.yaml a-chart/templates/
+- cmnd: bash -c 'cp test/templates/*.yaml a-chart/templates/'
   want: ''
 
-- cmnd: grep -rl YS-v0 a-chart
+- cmnd: bash -c 'grep -rl YS-v0 a-chart | sort'
   want: |
-    a-chart/templates/helpers.yaml
+    a-chart/templates/deployment.yaml
     a-chart/templates/helmys.yaml
+    a-chart/templates/helpers.yaml
+    a-chart/templates/serviceaccount.yaml
+    a-chart/templates/service.yaml
 
 - cmnd: helmys template a-chart
   want:: read('test/helmys-template-output.txt')
