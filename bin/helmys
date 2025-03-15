@@ -88,26 +88,9 @@ defn do-init:
       die: "'$chart' is not a chart directory"
 
     templates =: "$chart/templates"
-    when fs-f("$templates/helmys.yaml"):
-      die: "'$chart' already initialized"
 
-    # Ininitialize the Helm chart:
-    if ENV.HELMYS_TEST:
-      # Init with local files for `make test`:
-      then:
-        write "$templates/helmys.yaml":
-          read: 'templates/helmys.yaml'
-        write "$templates/helpers.yaml":
-          read: 'templates/helpers.yaml'
-
-      else:
-        # Init with files from source repository:
-        raw =: "https://raw.githubusercontent.com/\
-                kubeys/helmys/refs/heads/main"
-        write "$templates/helmys.yaml":
-          curl: "$raw/templates/helmys.yaml"
-        write "$templates/helpers.yaml":
-          curl: "$raw/templates/helpers.yaml"
+    write "$templates/helmys.yaml": init-helmys-yaml()
+    write "$templates/helpers.yaml": init-helpers-yaml()
 
 # Make a regex to find a chart by name:
 defn template-re(name):
@@ -213,6 +196,72 @@ defn exec-helm-command(cmd *args):
   command =: "helm $cmd $joins(args)"
   warn: "+ $command"
   exec: command
+
+#------------------------------------------------------------------------------
+
+defn init-helmys-yaml():: |
+  !YS-v0
+
+  #------------------------------------------------------------------------------
+  # Use Go templating to expand the Helm builtin objects into YS variables:
+  #
+  # * Release
+  # * Values
+  # * Chart
+  # * Subcharts
+  # * Capabilities
+  # * Template
+  # * Files
+  #
+  # See: https://helm.sh/docs/chart_template_guide/builtin_objects/
+  #------------------------------------------------------------------------------
+
+  {{ range $key, $value := . }}
+  {{ $key }} =::
+  {{- toYaml $value | nindent 2 }}
+  {{ end }}
+
+defn init-helpers-yaml():: |
+  !YS-v0
+
+  #------------------------------------------------------------------------------
+  # Define YS variables and functions to use in templates.
+  #------------------------------------------------------------------------------
+  defn trunc(s): take(63 s).str(*).replace(/-$/)
+
+  # Expand the name of the chart:
+  chart-name =:
+    trunc: Values.nameOverride ||| Chart.name
+
+  # Create a default fully qualified app name.
+  chart-fullname =:
+    if Values.fullnameOverride.?:
+      trunc: Values.fullnameOverride
+      else:
+        name =: Values.nameOverride ||| Chart.name
+        if name.has?(Release.Name):
+          trunc: Release.Name
+          format "%s-%s": Release.Name name
+
+  # Selector labels:
+  selectorLabels =::
+    app.kubernetes.io/name:: Chart.name
+    app.kubernetes.io/instance:: Release.Name
+
+  # Chart labels:
+  chart-labels =::
+    helm.sh/chart:: "$(Chart.name)-$(Chart.version)"
+    :: selectorLabels
+    app.kubernetes.io/version:: Chart.appVersion
+    app.kubernetes.io/managed-by:: Release.Service
+
+  # Create the name of the service account to use:
+  serviceAccountName =:
+    Values.serviceAccount.name |||:
+      if Values.serviceAccount.create:
+        chart-fullname
+        'default'
+
 
 #------------------------------------------------------------------------------
 create-ns: gh:q
