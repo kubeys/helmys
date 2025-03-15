@@ -14,7 +14,7 @@ cd helmys
 make install PREFIX=$HOME/.local
 ```
 
-Chart Setup:
+HelmYS Initialization (optional):
 ```
 helmys init <chart>
 ```
@@ -38,7 +38,7 @@ templates as you wish, replacing all the Go templating syntax or none of it.
 Using YS for your templating needs is much cleaner than the standard Go
 templating.
 See this side by side template file comparison of a full conversion:
-<https://yamlscript.org/doc/helmys>.
+<https://yamlscript.org/helmys>.
 
 In addition, templates that use YS exclusively for templating are valid YAML
 files, thus various YAML tools like `yamllint` can be used on them.
@@ -47,7 +47,16 @@ files, thus various YAML tools like `yamllint` can be used on them.
 ## Setting It Up
 
 Setting up HelmYS is very simple.
-Just install `helmys` and `ys` (the YS CLI binary), then initialize your chart.
+
+Just install `helmys` and `ys` (the YS CLI binary).
+By default `make install` will also install `ys` (next to `helmys`) if it isn't
+already installed.
+
+If you plan to use YS code in your chart templates, then initialize your chart.
+See below for more about that.
+
+There are plenty of useful things you can do with HelmYS without initializing
+your chart (or for charts that you don't own).
 
 
 ### Installing `helmys` and `ys`
@@ -79,12 +88,12 @@ Run:
 helmys init <chart>
 ```
 
-This will install the following 2 template files in your chart which is all you
-need to start installing charts that use YS:
+This will install the following 2 template files in your chart which is all
+you'll need to start using YS code in your chart template files.
 
 * `templates/helmys.yaml`
 
-  Expose the Helm builtin variables `Release`, `Values`, `Chart`, `Subcharts`,
+  Exposes the Helm builtin variables `Release`, `Values`, `Chart`, `Subcharts`,
   `Capabiities`, `Template` and `Files` as YS variables with the same names.
 
 * `templates/helpers.yaml`
@@ -98,6 +107,7 @@ need to start installing charts that use YS:
 
 Just add the `--post-renderer=helmys` option to your `helm install` (or `helm
 template` or `helm upgrade`) commands.
+
 ```
 $ helm install <name> <chart> --post-renderer=helmys
 ```
@@ -108,22 +118,35 @@ It's really that simple!
 
 ### Using `helmys` instead of `helm`
 
-For convenience you can run any of these commands:
-```
-$ helmys install ...
-$ helmys template ...
-$ helmys upgrade ...
-```
+For convenience you can use `helmys` instead of `helm` for all Helm commands.
 
-Instead of these commands:
-```
-$ helm install ... --post-renderer=helmys
-$ helm template ... --post-renderer=helmys
-$ helm upgrade ... --post-renderer=helmys
-```
+> NOTE: That means you can use `alias helm=helmys` in your shell if you wish.
 
-When `helmys` is used in place of those `helm` commands it simply runs `helm`
-with the same arguments and adds `--post-renderer=helmys` to the end.
+The `helmys` command will simply call `helm` with the same arguemnts.
+
+For the `install`, `template` and `upgrade` commands it will add the
+`--post-renderer=helmys` option.
+
+This makes it easier and more natual to use HelmYS with the Helm CLI.
+
+
+## Using HelmYS Hooks
+
+You can set the `HELMYS_HOOKS` environment variable to a file (or URL) of YS
+code that defines hook functions.
+
+Currently there is only one hook function:
+
+* `helmys-hook-out`
+
+  This function is called with a data node of each post-rendered YAML document
+  object.
+  The function can return a different object that will replace the original.
+  It can also return a `nil` value indicating that the original should not be
+  changed.
+
+  The resulting sequence of objects will then be converted to YAML which will
+  be the final post-renderer output.
 
 
 ## Environment Variables
@@ -132,6 +155,8 @@ HelmYS has some environment variables that you might want to use.
 
 These 3 are for debugging the YAML states during `helmys` post rendering.
 
+* `HELMYS_HOOKS=<file-name>`
+  See previous section.
 * `HELMYS_DEBUG_INPUT=<file-name>`
   Name of a file to write the text that `helmys` read (from `helm`) on stdin.
 * `HELMYS_DEBUG_THRUPUT=<file-name>`
@@ -142,12 +167,20 @@ These 3 are for debugging the YAML states during `helmys` post rendering.
   Name of a file to write the text after `helmys` has evaluated everything as
   YS.
 
-Templates using YS must start with a `!YS-v0:` tag.
-Use this in situations where a template may or may not have the tag but using
-`helmys` is necessary:
 
-* `HELMYS_AUTO_TAG=1`
-  Add the `!YS-v0:` tag to templates that don't have one.
+## Verifying that HelmYS doesn't change chart semantics
+
+You can run a command like this to test if a Chart processed with HelmYS is
+semantically equivalent to a chart processed without it:
+
+```
+$ ys -pe 'eq: ARGS.0:load ARGS.1:load' -- \
+<(helm template my-chart) \
+<(helm template my-chart --post-renderer=helmys)
+true
+```
+
+If the command prints `true` the results are semantically equivalent.
 
 
 ## Try It Out
