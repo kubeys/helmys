@@ -1,6 +1,6 @@
 SHELL := bash
 
-YS_VERSION := 0.1.94
+YS_VERSION := 0.1.95
 YS := ys-$(YS_VERSION)
 
 CHART := a-chart

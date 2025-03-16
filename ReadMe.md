@@ -72,7 +72,7 @@ there.
 
 > **Note**: You can use any directory absolute path for `PREFIX` as long as it
 > contains a `bin/` directory that is in your shell `PATH`.
-> Also `ys` must be version `0.1.94` or higher.
+> Also `ys` must be version `0.1.95` or higher.
 
 You can also install each of these separately with:
 ```

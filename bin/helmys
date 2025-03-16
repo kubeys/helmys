@@ -3,7 +3,7 @@
 # This is program provides a way to use YS (YAMLScript) for Helm templating.
 # See https://github.com/kubeys/helmys for full details.
 
-HELMYS-VERSION =: '0.1.7'
+HELMYS-VERSION =: '0.1.8'
 
 helm-commands =: qw(
   create dependency env get help history install lint list package plugin pull
