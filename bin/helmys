@@ -18,8 +18,11 @@ helm-commands =: qw(
 defn main:
   # No args. Do post-render:
   (): post-render()
+
   # Got args. Do init or proxy to helm:
-  (cmd *args):
+  (*args):
+    cmd *args =: get-args(args)
+
     condp eq cmd:
       '--version':
         say: "helmys v$HELMYS-VERSION"
@@ -180,7 +183,7 @@ defn load-hooks-library(lib):
 
 # Execute helm command with same args, plus '--post-renderer=helmys':
 defn exec-helm-with-post-renderer(cmd *args):
-  when args.some(\(/^--post-renderer/)):
+  when args.some(\(/^--post-renderer(?:=|$)/)):
     die: "Don't use the '--post-renderer' option with 'helmys'"
 
   when fs-f('values.ys'):
@@ -262,6 +265,23 @@ defn init-helpers-yaml():: |
         chart-fullname
         'default'
 
+defn get-args(args):
+  command =: get-helm-command()
+  ? if command.? &&
+      (command.0 == 'helm') &&
+      command.filter(/^--post-renderer-args/)
+  : then:
+      die: "The 'helmys' post-renderer command does not yet work with the helm
+            '--post-renderer-args' option."
+    else: args
+
+defn get-helm-command():
+  info =: sh-out('ps -ao pid,ppid,command'):lines
+  ppid =: info
+    .filter(qr("^ *$(RUN.pid) ")):first:words.drop(2):first
+  line =: info.filter(qr("^ *$ppid "))
+  when line.?:
+    line:first:words.drop(3):first.or(""):words
 
 #------------------------------------------------------------------------------
 when-not url:q:find-ns:
