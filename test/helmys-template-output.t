@@ -7,19 +7,22 @@ when sh('which helm').exit.?:
 
 sh: 'rm -fr a-chart'
 
+helm-out =: read('test/helm-template-output.txt')
+helmys-out =: read('test/helmys-template-output.txt')
+
 
 test::
 - cmnd: 'helm create a-chart'
   want: Creating a-chart
 
 - cmnd: helm template a-chart
-  want:: read('test/helm-template-output.txt')
+  want:: helm-out
 
 - cmnd: helm template a-chart --post-renderer=helmys
-  want:: read('test/helmys-template-output.txt')
+  want:: helmys-out
 
 - cmnd: helmys template a-chart
-  want:: read('test/helmys-template-output.txt')
+  want:: helmys-out
 
 - cmnd: helmys init a-chart
   want: ''
@@ -28,7 +31,7 @@ test::
 - code:: "fs-e:\ 'a-chart/templates/helpers.yaml'"
 
 - cmnd: helmys template a-chart
-  want:: read('test/helmys-template-output.txt')
+  want:: helmys-out
 
 - cmnd: bash -c 'cp test/templates/*.yaml a-chart/templates/'
   want: ''
@@ -42,9 +45,9 @@ test::
     a-chart/templates/service.yaml
 
 - cmnd: helmys template a-chart
-  want:: read('test/helmys-template-output.txt')
+  want:: helmys-out
 
 - cmnd: helmys template --validate a-chart
-  want:: read('test/helmys-template-output.txt')
+  want:: helmys-out
 
 done:
