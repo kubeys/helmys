@@ -282,19 +282,3 @@ defn get-helm-command():
   line =: info.filter(qr("^ *$ppid "))
   when line.?:
     line:first:words.drop(3):first.or(""):words
-
-#------------------------------------------------------------------------------
-when-not url:q:find-ns:
-  create-ns: url:q
-
-  intern url:q github-raw:q:
-    fn(spec):
-      owner repo ref *path =: spec.split('/')
-      format 'https://raw.githubusercontent.com/%s/%s/refs/heads/%s/%s':
-        owner repo ref path.join('/')
-
-  intern main:q load:q:
-    fn(url):
-      if url =~ /^https:/:
-        ys/eval: curl(url)
-        ys/load-file: url
