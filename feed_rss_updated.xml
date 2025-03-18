@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    
+    <title>Helm + YS = HelmYS</title>
+    <description>Helm + YS = HelmYS</description>
+    <link>https://helmys.org/</link>
+    <atom:link href="https://helmys.org/feed_rss_updated.xml" rel="self" type="application/rss+xml" />
+
+    
+    <managingEditor>Ingy döt Net</managingEditor>
+    <docs>https://github.com/kubeys/helmys</docs>
+    <language>en</language>
+
+    
+    <pubDate>Tue, 18 Mar 2025 02:25:12 -0000</pubDate>
+    <lastBuildDate>Tue, 18 Mar 2025 02:25:12 -0000</lastBuildDate>
+    <ttl>1440</ttl>
+
+    
+    <generator>MkDocs RSS plugin - v1.17.1</generator>
+
+    
+    
+    <image>
+      <url>None</url>
+      <title>Helm + YS = HelmYS</title>
+      <link>https://helmys.org/</link>
+    </image>
+    
+
+    
+    
+  </channel>
+</rss>

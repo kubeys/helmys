@@ -1,0 +1,216 @@
+---
+title: YS — YAML Done Wisely
+talk: 0
+# edit_file: www/src/index.mdys
+hide:
+- navigation
+- toc
+---
+
+<h1 class="headline">YS <small><a href="/faq/">(say "wise")</a></small> is the
+best way to work with YAML</h1>
+
+<div class="subtitle" markdown>
+<a href="/about/">
+:octicons-arrow-right-24:
+Learn More About YS</a></div>
+
+<!--
+!!! success "Zero to YS in 10 seconds!"
+
+    ```bash
+    curl -s https://getys.org/ys | bash
+    # Adjust PATH if asked to.
+    ys --help
+    ys -e 'say: "Hello, World!"'
+    ```
+    [:octicons-arrow-right-24: Learn More](about.md)
+-->
+
+```mdys:cards
+- name: Take Full Control of Your YAML
+  body: |
+    * **YS** is always 100% valid [YAML](https://yaml.org)
+        * Lint, Query, Validate w/ existing tools
+    * Created by [YAML inventor/maintainer](ingydotnet.md)
+    * [YS has YAML Loaders for all languages](doc/bindings.md)  
+      Same Capabilities, Features, Bugs and Fixes
+    * A Common & Consistent YAML Experience  
+      (with or without using YS logic features)
+
+- name: YAML Made Functional
+  type: code:yaml
+  body: |
+    !YS-v0:
+    vars =: load('vars.yaml')
+    json-file =: 'data.json'
+
+    a normal key: and normal value
+    name:: ENV.USER:uc1
+    color:: vars.colors:shuffle.0
+    some stuff::
+      curl("https://example.com/$json-file")
+        .stuff.take(rand-int(5).++)
+    :when ENV.DEBUG_VARS::
+      debug:: vars
+
+- name: Simplify your existing YAML
+  body: |
+    * Refactor, Deduplicate, DRY
+    * Over 1000 standard functions built in
+    * Dozens of built in libraries
+    * External libraries as well
+    * Define your own functions and libraries
+    * Limit YS capabilities to your exact needs
+
+- name: Plays Well with DevOps Tools
+  body: |
+    * [HelmYS for Kubernetes Helm charts](helmys.md)
+    * CI/CD, Docker, Ansible, etc.
+    * Your existing YAML files are valid YS!
+    * [Take them to the next level](
+      doc/ys4yaml.md)
+
+- name: Import, Transform, Interpolate and More
+  body: |
+    * [Load YS in your programs](doc/bindings.md)
+    * [Script Automation with YS](doc/examples.md)
+    * [Query and Transform YAML data](doc/query.md)
+    * [Compile YS to binary executables](doc/binary.md)
+
+- name: Learn YS Today!
+  body: |
+    * [YS Exercism Track](https://exercism.org/tracks/yamlscript)
+    * [KubeCon 2024 YS Tutorial](https://yamlscript.org/kubeys24)
+    * [YS on Rosetta Code](https://rosettacode.org/wiki/Category:YAMLScript)
+    * [YS Documentation](https://yamlscript.org/doc)
+```
+
+```mdys:cards
+- name: '"Zero to YS in 10 seconds!"'
+  icon: material-clock-fast
+  body: |
+    ```bash
+    curl -s https://getys.org/ys | bash
+    # Adjust PATH if asked to.
+    ys --help
+    ys -e 'say: "Hello, World!"'
+    ```
+```
+
+```mdys:YS-CODE
+defn mdys-cards(o): |
+  <div class="grid cards" markdown>
+
+  $(o.map(mdys-card).map(chomp).join("\n\n"))
+
+  </div>
+
+defn mdys-card(o):
+  name type body more =: o.slice(qw(name type body more))
+  body =:
+    if type == 'code:yaml':
+      then: "```yaml {.code}\n$body\n```"
+      else: body
+  icon =: o.icon || "material-owl"
+
+  card =:
+    ":$icon:{.lg .middle} __$name__\n\n\
+     ----\n\n$body\n"
+
+  card =:
+    if o.more:
+      card +: |
+        <br/>
+        [:octicons-arrow-right-24: Learn More]($(o.more))
+      else: card
+
+  replace1 card:indent4 /^./: '-'
+
+defn indent4(text):
+  text.replace(/(?m)^(.)/ "    $1")
+```
+
+
+
+
+
+
+
+```mdys:ignore
+<h1 class="empty"></h1><!-- disable auto title -->
+
+**YS** (pronounced "wise", aka YAMLScript) is a functional programming
+language with a clean syntax that is also 100% valid **[YAML](
+https://yaml.org)**.
+It was designed to be easily embedded into existing YAML files in order to
+provide the logic, interpolation and data transformation capabilities that many
+YAML users need.
+Created by YAML inventor and lead maintainer, Ingy döt Net, YS solves these
+needs beautifully for all YAML users and uses.
+
+!!! note "YS Exercism Track"
+
+    YS is now available as a programming language learning track on
+    **[Exercism](https://exercism.org/tracks/yamlscript)**.
+    It's a great way to learn YS and get feedback from experienced mentors.
+    Check it out!
+
+If you work with apps and frameworks that use YAML for configuration, you can
+simplify your complex YAML files using YS, even if the app or framework
+does not support it natively.
+YS lets you include data from external files and other sources, make use of
+hundreds of existing standard functions, and even define your own variables and
+functions.
+You can filter, map, merge, reduce, generate, concatenate, interpolate and
+manipulate your data as you wish.
+YS provides these things with syntax that is minimal and unobtrusive, keeping
+your clean YAML data clean.
+
+!!! note "YAMLScript at KubeCon 2024"
+
+    Slides and information from Ingy's [KubeCon 2024 talk](
+    https://www.youtube.com/watch?v=Cdi3Q4Wrt48)
+    are available [here](https://yamlscript.org/kubeys24).
+    The highlight was [HelmYS](https://github.com/kubeys/helmys) a new Helm
+    post-renderer that lets you template Helm charts with YS (which is actual
+    YAML).
+
+Like many new languages, YS was built over an existing robust language,
+[Clojure](https://clojure.org), which in turn was built over
+[Java](https://java.com).
+The power of Clojure and Java is available to YS users via the YS runtime
+interpreter, `ys`.
+However, the `ys` command is compiled into a single standalone native binary
+executable file.
+This means that <u>No Java or JVM</u> installation is required to use YS, and
+startup/execution speed is very fast.
+
+YS also produces the `libyamlscript.so` shared library.
+It has [binding modules for 10 programming languages](doc/bindings.md) including
+Go, JavaScript, Python and Rust, with many more on the way.
+These modules can be used in your programs to load normal YAML files as well as
+YS enhanced ones.
+
+There are many ways to use YS:
+
+* Simplify your existing YAML configs
+  * Works great with CI/CD, Helm, Docker, Ansible, etc.
+  * Check out [HelmYS](https://github.com/kubeys/helmys), a tool for using
+    YS in Kubernetes Helm chart templates painlessly.
+* [Load YS (or YAML) in your programs](doc/bindings.md)
+  * Available in 10 programming languages (and counting)
+* Program in YS
+  * Learn how at [Exercism](https://exercism.org/tracks/yamlscript)
+* [Script Automation with YS](doc/examples.md)
+  * Many used in the [YS repository](https://github.com/yaml/yamlscript)
+* [Compile YS to binary executables](doc/binary.md)
+  * Fast, standalone, no-source software distribution
+* [Query and Transform YAML (and JSON) data](doc/query.md)
+  * Use the `ys` command line tool similar to `jq` or `yq`
+```
+
+
+<div class="fill-500">
+<br/><br/><br/>
+</div>
